@@ -161,7 +161,7 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
               ),
               if (isRevealed && spotlight > 0.3)
                 Positioned(
-                  bottom: _showBackButton ? 100 : 120,
+                  bottom: _showBackButton ? 158 : 118,
                   child: Opacity(
                     opacity: spotlight,
                     child: Column(

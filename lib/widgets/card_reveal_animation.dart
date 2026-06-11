@@ -33,14 +33,20 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
   late final AnimationController _spotlightController;
   late final AnimationController _resultController;
 
+  late final _HandCards _hand;
+
   bool _showBackButton = false;
 
   static const _cardWidth = 118.0;
   static const _trailLags = [0.06, 0.13, 0.20, 0.28];
+  // 必须为整数圈，否则结束时角度无法回到正面
+  static const _flipRotations = 3;
 
   @override
   void initState() {
     super.initState();
+
+    _hand = _HandCards.randomFor(widget.decision);
 
     _dealCard1Controller = AnimationController(
       vsync: this,
@@ -52,7 +58,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
     );
     _flipController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 2600),
     );
     _spotlightController = AnimationController(
       vsync: this,
@@ -100,6 +106,22 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
     super.dispose();
   }
 
+  /// 慢 → 快 → 慢，用于连续翻牌
+  double _slowFastSlow(double t) {
+    return -(math.cos(math.pi * t.clamp(0.0, 1.0)) - 1) / 2;
+  }
+
+  double _flipAngle(double t) {
+    return _slowFastSlow(t) * _flipRotations * 2 * math.pi;
+  }
+
+  /// 将翻转角度归一化到 [0, 2π)，落定后强制回正
+  double _displayRotateY(double flipAngle, bool flipDone) {
+    if (flipDone) return 0;
+    final norm = flipAngle % (2 * math.pi);
+    return math.cos(norm) >= 0 ? norm : norm - math.pi;
+  }
+
   /// 逆转王牌风格：牌从屏幕右侧长距离水平滑入
   _CardMotion _cardMotion({
     required double t,
@@ -139,19 +161,17 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
       builder: (context, _) {
         final deal1 = _dealCard1Controller.value;
         final deal2 = _dealCard2Controller.value;
-        final flip = Curves.easeInOutCubic.transform(_flipController.value);
+        final flipT = _flipController.value;
+        final flipAngle = _flipAngle(flipT);
         final spotlight = Curves.easeOut.transform(_spotlightController.value);
-        final isRevealed = _flipController.isCompleted;
-
-        final card1 = _cardForDecision(widget.decision, index: 0);
-        final card2 = _cardForDecision(widget.decision, index: 1);
+        final flipDone = _flipController.isCompleted;
+        final isRevealed = flipDone;
 
         const leftEndX = -78.0;
         const rightEndX = 78.0;
 
         final motion1 = _cardMotion(t: deal1, startX: slideStartX, endX: leftEndX);
         final motion2 = _cardMotion(t: deal2, startX: slideStartX, endX: rightEndX);
-        final flipAngle = flip * math.pi;
 
         final anySliding = (deal1 > 0 && deal1 < 1) || (deal2 > 0 && deal2 < 1);
 
@@ -187,8 +207,9 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
               _slidingCard(
                 motion: motion1,
                 flipAngle: flipAngle,
-                rank: card1.$1,
-                suit: card1.$2,
+                flipDone: flipDone,
+                rank: _hand.card1Rank,
+                suit: _hand.card1Suit,
                 highlight: isRevealed && spotlight > 0.5,
                 visible: deal1 > 0,
               ),
@@ -196,8 +217,9 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
               _slidingCard(
                 motion: motion2,
                 flipAngle: flipAngle,
-                rank: card2.$1,
-                suit: card2.$2,
+                flipDone: flipDone,
+                rank: _hand.card2Rank,
+                suit: _hand.card2Suit,
                 highlight: isRevealed && spotlight > 0.5,
                 visible: deal2 > 0,
               ),
@@ -219,7 +241,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                   ),
                 ),
                 Positioned(
-                  bottom: _showBackButton ? 90 : 100,
+                  bottom: _showBackButton ? 158 : 118,
                   child: Opacity(
                     opacity: spotlight,
                     child: Column(
@@ -237,9 +259,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          widget.decision.isDo
-                              ? 'AA — 最强起手牌'
-                              : '7♠2♣ — 最烂起手牌',
+                          _hand.handLabel,
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white60,
@@ -329,6 +349,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
   Widget _slidingCard({
     required _CardMotion motion,
     required double flipAngle,
+    required bool flipDone,
     required String rank,
     required Suit suit,
     required bool highlight,
@@ -336,8 +357,9 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
   }) {
     if (!visible) return const SizedBox.shrink();
 
-    final showFront = flipAngle > math.pi / 2;
-    final yFlip = showFront ? flipAngle - math.pi : flipAngle;
+    final yFlip = _displayRotateY(flipAngle, flipDone);
+    // 翻牌全程只露牌背，落定后才揭晓真牌面
+    final faceDown = !flipDone;
     final sliding = motion.speed > 0.08;
 
     return Positioned.fill(
@@ -366,8 +388,8 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                   rank: rank,
                   suit: suit,
                   width: _cardWidth,
-                  faceDown: !showFront,
-                  highlight: showFront && highlight,
+                  faceDown: faceDown,
+                  highlight: !faceDown && highlight,
                 ),
               ),
             ),
@@ -377,11 +399,61 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
     );
   }
 
-  (String, Suit) _cardForDecision(Decision decision, {required int index}) {
+}
+
+/// 起手牌组合，NOT 时随机不同花色
+class _HandCards {
+  const _HandCards({
+    required this.card1Rank,
+    required this.card1Suit,
+    required this.card2Rank,
+    required this.card2Suit,
+    required this.handLabel,
+  });
+
+  final String card1Rank;
+  final Suit card1Suit;
+  final String card2Rank;
+  final Suit card2Suit;
+  final String handLabel;
+
+  static final _rng = math.Random();
+
+  static _HandCards randomFor(Decision decision) {
     if (decision.isDo) {
-      return ('A', index == 0 ? Suit.spade : Suit.heart);
+      final suits = List<Suit>.from(Suit.values)..shuffle(_rng);
+      final s1 = suits[0];
+      final s2 = suits[1];
+      return _HandCards(
+        card1Rank: 'A',
+        card1Suit: s1,
+        card2Rank: 'A',
+        card2Suit: s2,
+        handLabel: 'A${s1.symbol} A${s2.symbol} — 最强起手牌',
+      );
     }
-    return index == 0 ? ('7', Suit.spade) : ('2', Suit.club);
+
+    final suits = List<Suit>.from(Suit.values)..shuffle(_rng);
+    final s1 = suits[0];
+    var s2 = suits[1];
+    if (s1 == s2) {
+      s2 = suits.firstWhere((s) => s != s1);
+    }
+
+    // 7 和 2 随机左右，但保持不同花
+    final sevenFirst = _rng.nextBool();
+    final rank1 = sevenFirst ? '7' : '2';
+    final suit1 = sevenFirst ? s1 : s2;
+    final rank2 = sevenFirst ? '2' : '7';
+    final suit2 = sevenFirst ? s2 : s1;
+
+    return _HandCards(
+      card1Rank: rank1,
+      card1Suit: suit1,
+      card2Rank: rank2,
+      card2Suit: suit2,
+      handLabel: '$rank1${suit1.symbol} $rank2${suit2.symbol} — 最烂起手牌',
+    );
   }
 }
 
