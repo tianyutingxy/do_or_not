@@ -394,7 +394,7 @@ class _HandCards {
         card1Suit: s1,
         card2Rank: 'A',
         card2Suit: s2,
-        handLabel: 'A${s1.symbol} A${s2.symbol} — 最强起手牌',
+        handLabel: '最强起手牌',
       );
     }
 
@@ -417,7 +417,7 @@ class _HandCards {
       card1Suit: suit1,
       card2Rank: rank2,
       card2Suit: suit2,
-      handLabel: '$rank1${suit1.symbol} $rank2${suit2.symbol} — 最烂起手牌',
+      handLabel: '最烂起手牌',
     );
   }
 }

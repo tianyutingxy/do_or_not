@@ -34,6 +34,7 @@ class RevealResultHeader extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 if (flavorTitle != null) ...[
                   Text(
@@ -48,7 +49,8 @@ class RevealResultHeader extends StatelessWidget {
                   const SizedBox(height: 10),
                 ],
                 Text(
-                  '命运给出了 ${decision.label}',
+                  '命运给出了',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
                     letterSpacing: 2,
@@ -58,6 +60,7 @@ class RevealResultHeader extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   decision.label,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w900,
@@ -69,6 +72,7 @@ class RevealResultHeader extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     detailLine!,
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 15,
                       color: Colors.white60,
