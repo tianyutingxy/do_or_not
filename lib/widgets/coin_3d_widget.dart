@@ -247,16 +247,30 @@ class _CoinReverseCat extends StatelessWidget {
   }
 }
 
-/// 以 PNG 轮廓为蒙版，叠金色渐变 + 偏移阴影，与币面统一
+/// 保留原图眼/嘴惊恐细节，色彩矩阵转金色 + 偏移阴影浮雕
 class _GoldEmbossedCat extends StatelessWidget {
   const _GoldEmbossedCat({required this.size});
 
   final double size;
 
+  /// 暖金色调，保留明暗对比（眼、嘴轮廓仍在）
+  static const _goldTone = ColorFilter.matrix([
+    0.52, 0.42, 0.06, 0, 38,
+    0.40, 0.34, 0.05, 0, 28,
+    0.10, 0.08, 0.02, 0, 6,
+    0, 0, 0, 1, 0,
+  ]);
+
+  static const _shadowTone = ColorFilter.matrix([
+    0.28, 0.22, 0.04, 0, 8,
+    0.22, 0.18, 0.03, 0, 6,
+    0.06, 0.05, 0.01, 0, 2,
+    0, 0, 0, 0.85, 0,
+  ]);
+
   @override
   Widget build(BuildContext context) {
-    final shadow = Offset(size * 0.024, size * 0.03);
-    final highlight = Offset(-size * 0.014, -size * 0.016);
+    final shadow = Offset(size * 0.022, size * 0.028);
 
     return Transform.rotate(
       angle: math.pi,
@@ -269,58 +283,24 @@ class _GoldEmbossedCat extends StatelessWidget {
           children: [
             Transform.translate(
               offset: shadow,
-              child: _catSilhouette(
-                const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [_Gold.deep, _Gold.carved],
-                ),
-              ),
+              child: _tintedCat(_shadowTone),
             ),
-            Transform.translate(
-              offset: highlight,
-              child: _catSilhouette(
-                LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    _Gold.highlight.withValues(alpha: 0.5),
-                    _Gold.light.withValues(alpha: 0.28),
-                  ],
-                ),
-              ),
-            ),
-            _catSilhouette(
-              const LinearGradient(
-                begin: Alignment(-0.45, -0.55),
-                end: Alignment(0.55, 0.75),
-                colors: [
-                  _Gold.highlight,
-                  _Gold.light,
-                  _Gold.mid,
-                  _Gold.shadow,
-                ],
-                stops: [0.0, 0.32, 0.68, 1.0],
-              ),
-            ),
+            _tintedCat(_goldTone),
           ],
         ),
       ),
     );
   }
 
-  Widget _catSilhouette(Gradient gradient) {
-    return ShaderMask(
-      blendMode: BlendMode.srcIn,
-      shaderCallback: (bounds) => gradient.createShader(bounds),
+  Widget _tintedCat(ColorFilter filter) {
+    return ColorFiltered(
+      colorFilter: filter,
       child: Image.asset(
         _wearyCatAsset,
         width: size,
         height: size,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.high,
-        color: Colors.white,
-        colorBlendMode: BlendMode.srcIn,
       ),
     );
   }
