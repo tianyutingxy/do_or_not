@@ -19,6 +19,7 @@ class CardRevealAnimation extends StatefulWidget {
     required this.onChoice,
     this.choiceLocked = false,
     this.shakingChoice,
+    this.confirmedChoice,
   });
 
   final Decision decision;
@@ -26,6 +27,7 @@ class CardRevealAnimation extends StatefulWidget {
   final void Function(UserResponse response) onChoice;
   final bool choiceLocked;
   final UserResponse? shakingChoice;
+  final UserResponse? confirmedChoice;
 
   @override
   State<CardRevealAnimation> createState() => _CardRevealAnimationState();
@@ -75,7 +77,10 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
       duration: const Duration(milliseconds: 1200),
     );
 
-    _runSequence();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _runSequence();
+    });
   }
 
   Future<void> _runSequence() async {
@@ -186,11 +191,6 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              SpotlightOverlay(
-                intensity: isRevealed ? spotlight : 0,
-                spotRadius: 0.38,
-              ),
-
               // 滑动方向速度线
               if (anySliding) _speedLines(deal1, deal2),
 
@@ -214,9 +214,11 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                 motion: motion1,
                 flipAngle: flipAngle,
                 flipDone: flipDone,
+                use3D: _flipController.isAnimating || flipDone,
                 rank: _hand.card1Rank,
                 suit: _hand.card1Suit,
-                highlight: isRevealed && spotlight > 0.5,
+                highlight: isRevealed && spotlight > 0,
+                highlightStrength: spotlight,
                 visible: deal1 > 0,
               ),
 
@@ -224,11 +226,21 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                 motion: motion2,
                 flipAngle: flipAngle,
                 flipDone: flipDone,
+                use3D: _flipController.isAnimating || flipDone,
                 rank: _hand.card2Rank,
                 suit: _hand.card2Suit,
-                highlight: isRevealed && spotlight > 0.5,
+                highlight: isRevealed && spotlight > 0,
+                highlightStrength: spotlight,
                 visible: deal2 > 0,
               ),
+
+              if (isRevealed && spotlight > 0)
+                RepaintBoundary(
+                  child: SpotlightOverlay(
+                    intensity: spotlight,
+                    spotRadius: 0.38,
+                  ),
+                ),
 
               if (isRevealed && spotlight > 0.3)
                 RevealResultHeader(
@@ -249,6 +261,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                     onChoice: widget.onChoice,
                     locked: widget.choiceLocked,
                     shaking: widget.shakingChoice,
+                    confirmed: widget.confirmedChoice,
                   ),
                 ),
             ],
@@ -275,19 +288,27 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
   }
 
   Widget _ghostCard({required _CardMotion motion, required double opacity}) {
+    final t = opacity.clamp(0.0, 1.0);
+
     return Positioned.fill(
       child: Center(
         child: Transform.translate(
           offset: motion.offset,
-          child: Opacity(
-            opacity: opacity,
-            child: Transform.rotate(
-              angle: motion.rotationZ,
-              child: PlayingCardWidget(
-                rank: ' ',
-                suit: Suit.spade,
-                width: _cardWidth,
-                faceDown: true,
+          child: Transform.rotate(
+            angle: motion.rotationZ,
+            child: Container(
+              width: _cardWidth,
+              height: _cardWidth * 1.4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1E3A5F).withValues(alpha: 0.75 * t),
+                    const Color(0xFF0D1B2A).withValues(alpha: 0.75 * t),
+                  ],
+                ),
               ),
             ),
           ),
@@ -315,51 +336,58 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
     required _CardMotion motion,
     required double flipAngle,
     required bool flipDone,
+    required bool use3D,
     required String rank,
     required Suit suit,
     required bool highlight,
+    required double highlightStrength,
     required bool visible,
   }) {
     if (!visible) return const SizedBox.shrink();
 
     final yFlip = _displayRotateY(flipAngle, flipDone);
-    // 翻牌全程只露牌背，落定后才揭晓真牌面
     final faceDown = !flipDone;
     final sliding = motion.speed > 0.08;
 
+    final card = DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: sliding ? 0.5 : 0.3),
+            blurRadius: sliding ? 20 : 10,
+            offset: Offset(-motion.speed * 18, 6),
+          ),
+        ],
+      ),
+      child: PlayingCardWidget(
+        rank: rank,
+        suit: suit,
+        width: _cardWidth,
+        faceDown: faceDown,
+        highlight: !faceDown && highlight,
+        highlightStrength: highlightStrength,
+      ),
+    );
+
+    final rotated = Transform.rotate(angle: motion.rotationZ, child: card);
+
+    final Widget flipped;
+    if (use3D) {
+      flipped = Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()
+          ..setEntry(3, 2, 0.001)
+          ..rotateY(yFlip),
+        child: rotated,
+      );
+    } else {
+      flipped = rotated;
+    }
+
     return Positioned.fill(
       child: Center(
-        child: Transform.translate(
-          offset: motion.offset,
-          child: Transform.rotate(
-            angle: motion.rotationZ,
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001)
-                ..rotateY(yFlip),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: sliding ? 0.5 : 0.3),
-                      blurRadius: sliding ? 20 : 10,
-                      offset: Offset(-motion.speed * 18, 6),
-                    ),
-                  ],
-                ),
-                child: PlayingCardWidget(
-                  rank: rank,
-                  suit: suit,
-                  width: _cardWidth,
-                  faceDown: faceDown,
-                  highlight: !faceDown && highlight,
-                ),
-              ),
-            ),
-          ),
-        ),
+        child: Transform.translate(offset: motion.offset, child: flipped),
       ),
     );
   }

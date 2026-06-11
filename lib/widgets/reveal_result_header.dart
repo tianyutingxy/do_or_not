@@ -20,6 +20,9 @@ class RevealResultHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = opacity.clamp(0.0, 1.0);
+    if (t <= 0) return const SizedBox.shrink();
+
     final resultColor =
         decision.isDo ? AppColors.doGreen : AppColors.notRed;
 
@@ -29,58 +32,55 @@ class RevealResultHeader extends StatelessWidget {
       right: 0,
       child: SafeArea(
         bottom: false,
-        child: Opacity(
-          opacity: opacity,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (flavorTitle != null) ...[
-                  Text(
-                    flavorTitle!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      letterSpacing: 3,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.gold.withValues(alpha: 0.85),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (flavorTitle != null) ...[
                 Text(
-                  '命运给出了',
-                  textAlign: TextAlign.center,
+                  flavorTitle!,
                   style: TextStyle(
                     fontSize: 13,
-                    letterSpacing: 2,
-                    color: Colors.white.withValues(alpha: 0.45),
+                    letterSpacing: 3,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.gold.withValues(alpha: 0.85 * t),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
+              ],
+              Text(
+                '命运给出了',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  letterSpacing: 2,
+                  color: Colors.white.withValues(alpha: 0.45 * t),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                decision.label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 6,
+                  color: resultColor.withValues(alpha: t),
+                ),
+              ),
+              if (detailLine != null) ...[
+                const SizedBox(height: 4),
                 Text(
-                  decision.label,
+                  detailLine!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 6,
-                    color: resultColor,
+                    fontSize: 15,
+                    color: Colors.white.withValues(alpha: 0.6 * t),
                   ),
                 ),
-                if (detailLine != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    detailLine!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.white60,
-                    ),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         ),
       ),

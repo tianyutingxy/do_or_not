@@ -32,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _sessionRetryCount = 0;
   bool _isConfirming = false;
   UserResponse? _confirmingResponse;
+  UserResponse? _confirmedResponse;
 
   @override
   void initState() {
@@ -65,6 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _pendingDecision = decision;
       _decisionRound++;
       _sessionRetryCount = 0;
+      _isConfirming = false;
+      _confirmingResponse = null;
+      _confirmedResponse = null;
     });
   }
 
@@ -91,6 +95,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _stats = updated;
           _pendingDecision = next;
           _decisionRound++;
+          _isConfirming = false;
+          _confirmingResponse = null;
+          _confirmedResponse = null;
         });
     }
   }
@@ -102,33 +109,36 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isConfirming = true;
       _confirmingResponse = response;
+      _confirmedResponse = null;
     });
 
-    try {
-      await Future<void>.delayed(const Duration(milliseconds: 560));
-      if (!mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 560));
+    if (!mounted) return;
 
-      final updated = await _statsService.recordUserChoice(
-        decision: recorded,
-        response: response,
-        retriesThisSession: _sessionRetryCount,
-      );
-      if (!mounted) return;
+    final updated = await _statsService.recordUserChoice(
+      decision: recorded,
+      response: response,
+      retriesThisSession: _sessionRetryCount,
+    );
+    if (!mounted) return;
 
-      setState(() {
-        _stats = updated;
-        _isDeciding = false;
-        _pendingDecision = null;
-        _sessionRetryCount = 0;
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isConfirming = false;
-          _confirmingResponse = null;
-        });
-      }
-    }
+    setState(() {
+      _stats = updated;
+      _confirmingResponse = null;
+      _confirmedResponse = response;
+    });
+  }
+
+  void _exitReveal() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isDeciding = false;
+      _pendingDecision = null;
+      _sessionRetryCount = 0;
+      _isConfirming = false;
+      _confirmingResponse = null;
+      _confirmedResponse = null;
+    });
   }
 
   Future<void> _switchStyle(RevealStyle style) async {
@@ -193,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onChoice: _onChoice,
                       choiceLocked: _isConfirming,
                       shakingChoice: _confirmingResponse,
+                      confirmedChoice: _confirmedResponse,
                     )
                   : CardRevealAnimation(
                       key: ValueKey(_decisionRound),
@@ -201,7 +212,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       onChoice: _onChoice,
                       choiceLocked: _isConfirming,
                       shakingChoice: _confirmingResponse,
+                      confirmedChoice: _confirmedResponse,
                     ),
+            ),
+          if (_isDeciding && _confirmedResponse != null)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: _exitReveal,
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white70,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),

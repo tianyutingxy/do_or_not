@@ -11,14 +11,20 @@ class RevealChoicePanel extends StatelessWidget {
     required this.onChoice,
     this.locked = false,
     this.shaking,
+    this.confirmed,
   });
 
   final void Function(UserResponse response) onChoice;
   final bool locked;
   final UserResponse? shaking;
+  final UserResponse? confirmed;
 
   @override
   Widget build(BuildContext context) {
+    if (confirmed != null) {
+      return _ConfirmedPanel(response: confirmed!);
+    }
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
@@ -83,6 +89,59 @@ class RevealChoicePanel extends StatelessWidget {
     );
 
     return ShakeWidget(shake: isShaking, child: button);
+  }
+}
+
+/// 抖动结束后就地替换为确认文案（方案 1，无 Toast / 遮罩）
+class _ConfirmedPanel extends StatelessWidget {
+  const _ConfirmedPanel({required this.response});
+
+  final UserResponse response;
+
+  @override
+  Widget build(BuildContext context) {
+    final isComply = response == UserResponse.comply;
+    final color = isComply ? AppColors.doGreen : AppColors.notRed;
+    final icon = isComply ? Icons.check_circle_rounded : Icons.bolt_rounded;
+    final line = isComply ? '就如此吧 · 已遵从' : '我就反着来 · 已反抗';
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.55), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.2),
+                blurRadius: 20,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                line,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

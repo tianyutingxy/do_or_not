@@ -19,6 +19,7 @@ class CoinRevealAnimation extends StatefulWidget {
     required this.onChoice,
     this.choiceLocked = false,
     this.shakingChoice,
+    this.confirmedChoice,
   });
 
   final Decision decision;
@@ -26,6 +27,7 @@ class CoinRevealAnimation extends StatefulWidget {
   final void Function(UserResponse response) onChoice;
   final bool choiceLocked;
   final UserResponse? shakingChoice;
+  final UserResponse? confirmedChoice;
 
   @override
   State<CoinRevealAnimation> createState() => _CoinRevealAnimationState();
@@ -69,7 +71,10 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
       CurvedAnimation(parent: _resultController, curve: Curves.elasticOut),
     );
 
-    _runSequence();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _runSequence();
+    });
   }
 
   Future<void> _runSequence() async {
@@ -147,10 +152,6 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              SpotlightOverlay(
-                intensity: isRevealed ? spotlight : progress * 0.15,
-                spotRadius: 0.28,
-              ),
               Transform(
                 alignment: Alignment.center,
                 transform: Matrix4.identity()
@@ -161,10 +162,18 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
                   child: CoinFaceWidget(
                     decision: isRevealed ? widget.decision : displayDecision,
                     diameter: 180,
-                    highlight: isRevealed && spotlight > 0.5,
+                    highlight: isRevealed && spotlight > 0,
+                    highlightStrength: spotlight,
                   ),
                 ),
               ),
+              if (isRevealed && spotlight > 0)
+                RepaintBoundary(
+                  child: SpotlightOverlay(
+                    intensity: spotlight,
+                    spotRadius: 0.28,
+                  ),
+                ),
               if (isRevealed && spotlight > 0.3)
                 RevealResultHeader(
                   decision: widget.decision,
@@ -179,6 +188,7 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
                     onChoice: widget.onChoice,
                     locked: widget.choiceLocked,
                     shaking: widget.shakingChoice,
+                    confirmed: widget.confirmedChoice,
                   ),
                 ),
             ],

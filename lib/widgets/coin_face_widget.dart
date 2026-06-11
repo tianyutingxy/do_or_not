@@ -9,11 +9,13 @@ class CoinFaceWidget extends StatelessWidget {
     required this.decision,
     this.diameter = 160,
     this.highlight = false,
+    this.highlightStrength = 1.0,
   });
 
   final Decision decision;
   final double diameter;
   final bool highlight;
+  final double highlightStrength;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +27,8 @@ class CoinFaceWidget extends StatelessWidget {
         ? const Color(0xFFC9A227)
         : const Color(0xFF6B6B78);
 
+    final glow = highlight ? highlightStrength.clamp(0.0, 1.0) : 0.0;
+
     return Container(
       width: diameter,
       height: diameter,
@@ -32,11 +36,11 @@ class CoinFaceWidget extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: highlight
-                ? AppColors.gold.withValues(alpha: 0.7)
+            color: glow > 0
+                ? AppColors.gold.withValues(alpha: 0.7 * glow)
                 : Colors.black.withValues(alpha: 0.5),
-            blurRadius: highlight ? 30 : 16,
-            spreadRadius: highlight ? 4 : 0,
+            blurRadius: 16 + 14 * glow,
+            spreadRadius: 4 * glow,
           ),
         ],
         gradient: RadialGradient(
