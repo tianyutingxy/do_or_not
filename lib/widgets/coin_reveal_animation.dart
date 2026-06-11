@@ -17,11 +17,15 @@ class CoinRevealAnimation extends StatefulWidget {
     required this.decision,
     required this.onRevealed,
     required this.onChoice,
+    this.choiceLocked = false,
+    this.shakingChoice,
   });
 
   final Decision decision;
   final VoidCallback onRevealed;
   final void Function(UserResponse response) onChoice;
+  final bool choiceLocked;
+  final UserResponse? shakingChoice;
 
   @override
   State<CoinRevealAnimation> createState() => _CoinRevealAnimationState();
@@ -171,7 +175,11 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: RevealChoicePanel(onChoice: widget.onChoice),
+                  child: RevealChoicePanel(
+                    onChoice: widget.onChoice,
+                    locked: widget.choiceLocked,
+                    shaking: widget.shakingChoice,
+                  ),
                 ),
             ],
           ),

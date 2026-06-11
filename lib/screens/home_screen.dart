@@ -30,6 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Decision? _pendingDecision;
   int _decisionRound = 0;
   int _sessionRetryCount = 0;
+  bool _isConfirming = false;
+  UserResponse? _confirmingResponse;
 
   @override
   void initState() {
@@ -72,13 +74,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _onChoice(UserResponse response) async {
     final objective = _pendingDecision;
-    if (objective == null) return;
+    if (objective == null || _isConfirming) return;
 
     switch (response) {
       case UserResponse.comply:
-        await _finalize(objective, UserResponse.comply);
+        await _finalizeWithShake(objective, UserResponse.comply);
       case UserResponse.rebel:
-        await _finalize(objective.opposite, UserResponse.rebel);
+        await _finalizeWithShake(objective.opposite, UserResponse.rebel);
       case UserResponse.retry:
         HapticFeedback.lightImpact();
         _sessionRetryCount++;
@@ -93,19 +95,40 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _finalize(Decision recorded, UserResponse response) async {
-    final updated = await _statsService.recordUserChoice(
-      decision: recorded,
-      response: response,
-      retriesThisSession: _sessionRetryCount,
-    );
-    if (!mounted) return;
+  Future<void> _finalizeWithShake(
+    Decision recorded,
+    UserResponse response,
+  ) async {
     setState(() {
-      _stats = updated;
-      _isDeciding = false;
-      _pendingDecision = null;
-      _sessionRetryCount = 0;
+      _isConfirming = true;
+      _confirmingResponse = response;
     });
+
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 560));
+      if (!mounted) return;
+
+      final updated = await _statsService.recordUserChoice(
+        decision: recorded,
+        response: response,
+        retriesThisSession: _sessionRetryCount,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _stats = updated;
+        _isDeciding = false;
+        _pendingDecision = null;
+        _sessionRetryCount = 0;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isConfirming = false;
+          _confirmingResponse = null;
+        });
+      }
+    }
   }
 
   Future<void> _switchStyle(RevealStyle style) async {
@@ -168,12 +191,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       decision: _pendingDecision!,
                       onRevealed: _onRevealed,
                       onChoice: _onChoice,
+                      choiceLocked: _isConfirming,
+                      shakingChoice: _confirmingResponse,
                     )
                   : CardRevealAnimation(
                       key: ValueKey(_decisionRound),
                       decision: _pendingDecision!,
                       onRevealed: _onRevealed,
                       onChoice: _onChoice,
+                      choiceLocked: _isConfirming,
+                      shakingChoice: _confirmingResponse,
                     ),
             ),
         ],
