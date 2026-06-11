@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../models/animation_style.dart' show RevealStyle;
 import '../models/decision.dart';
+import '../models/user_response.dart';
 import '../models/user_stats.dart';
 import '../services/stats_service.dart';
 import '../theme/app_theme.dart';
@@ -27,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
   RevealStyle _style = RevealStyle.coin;
   bool _isDeciding = false;
   Decision? _pendingDecision;
+  int _decisionRound = 0;
+  int _sessionRetryCount = 0;
 
   @override
   void initState() {
@@ -58,19 +61,50 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isDeciding = true;
       _pendingDecision = decision;
+      _decisionRound++;
+      _sessionRetryCount = 0;
     });
   }
 
-  Future<void> _onRevealed(Decision decision) async {
-    final updated = await _statsService.record(decision);
-    if (!mounted) return;
-    setState(() => _stats = updated);
+  void _onRevealed() {
+    // 动画播完，等待用户选择；统计在 _onChoice 中记录
   }
 
-  void _onDismiss() {
+  Future<void> _onChoice(UserResponse response) async {
+    final objective = _pendingDecision;
+    if (objective == null) return;
+
+    switch (response) {
+      case UserResponse.comply:
+        await _finalize(objective, UserResponse.comply);
+      case UserResponse.rebel:
+        await _finalize(objective.opposite, UserResponse.rebel);
+      case UserResponse.retry:
+        HapticFeedback.lightImpact();
+        _sessionRetryCount++;
+        final updated = await _statsService.recordRetryPress();
+        if (!mounted) return;
+        final next = _random.nextBool() ? Decision.doIt : Decision.notIt;
+        setState(() {
+          _stats = updated;
+          _pendingDecision = next;
+          _decisionRound++;
+        });
+    }
+  }
+
+  Future<void> _finalize(Decision recorded, UserResponse response) async {
+    final updated = await _statsService.recordUserChoice(
+      decision: recorded,
+      response: response,
+      retriesThisSession: _sessionRetryCount,
+    );
+    if (!mounted) return;
     setState(() {
+      _stats = updated;
       _isDeciding = false;
       _pendingDecision = null;
+      _sessionRetryCount = 0;
     });
   }
 
@@ -130,14 +164,16 @@ class _HomeScreenState extends State<HomeScreen> {
             Positioned.fill(
               child: _style == RevealStyle.coin
                   ? CoinRevealAnimation(
+                      key: ValueKey(_decisionRound),
                       decision: _pendingDecision!,
                       onRevealed: _onRevealed,
-                      onDismiss: _onDismiss,
+                      onChoice: _onChoice,
                     )
                   : CardRevealAnimation(
+                      key: ValueKey(_decisionRound),
                       decision: _pendingDecision!,
                       onRevealed: _onRevealed,
-                      onDismiss: _onDismiss,
+                      onChoice: _onChoice,
                     ),
             ),
         ],

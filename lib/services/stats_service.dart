@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/decision.dart';
+import '../models/user_response.dart';
 import '../models/user_stats.dart';
 
 class StatsService {
@@ -16,7 +17,7 @@ class StatsService {
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       return UserStats.fromJson(
-        map.map((k, v) => MapEntry(k, v as int)),
+        map.map((k, v) => MapEntry(k, (v as num).toInt())),
       );
     } catch (_) {
       return const UserStats();
@@ -28,9 +29,24 @@ class StatsService {
     await prefs.setString(_statsKey, jsonEncode(stats.toJson()));
   }
 
-  Future<UserStats> record(Decision decision) async {
+  Future<UserStats> recordUserChoice({
+    required Decision decision,
+    required UserResponse response,
+    required int retriesThisSession,
+  }) async {
     final stats = await loadStats();
-    final updated = stats.increment(decision);
+    final updated = stats.recordChoice(
+      decision: decision,
+      response: response,
+      retriesThisSession: retriesThisSession,
+    );
+    await saveStats(updated);
+    return updated;
+  }
+
+  Future<UserStats> recordRetryPress() async {
+    final stats = await loadStats();
+    final updated = stats.recordRetryPress();
     await saveStats(updated);
     return updated;
   }

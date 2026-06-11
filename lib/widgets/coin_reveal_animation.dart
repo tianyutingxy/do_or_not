@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/decision.dart';
+import '../models/user_response.dart';
 import '../theme/app_theme.dart';
 import 'coin_face_widget.dart';
-import 'reveal_back_button.dart';
+import 'reveal_choice_panel.dart';
+import 'reveal_result_header.dart';
 import 'spotlight_overlay.dart';
 
 class CoinRevealAnimation extends StatefulWidget {
@@ -14,12 +16,12 @@ class CoinRevealAnimation extends StatefulWidget {
     super.key,
     required this.decision,
     required this.onRevealed,
-    required this.onDismiss,
+    required this.onChoice,
   });
 
   final Decision decision;
-  final void Function(Decision decision) onRevealed;
-  final VoidCallback onDismiss;
+  final VoidCallback onRevealed;
+  final void Function(UserResponse response) onChoice;
 
   @override
   State<CoinRevealAnimation> createState() => _CoinRevealAnimationState();
@@ -35,7 +37,7 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
   late final Animation<double> _spotlightAnim;
   late final Animation<double> _resultScale;
 
-  bool _showBackButton = false;
+  bool _showChoices = false;
 
   static const _spinDuration = Duration(milliseconds: 2200);
   static const _spotlightDuration = Duration(milliseconds: 800);
@@ -75,8 +77,8 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
     _resultController.forward();
     if (!mounted) return;
 
-    widget.onRevealed(widget.decision);
-    setState(() => _showBackButton = true);
+    widget.onRevealed();
+    setState(() => _showChoices = true);
   }
 
   @override
@@ -160,41 +162,16 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
                 ),
               ),
               if (isRevealed && spotlight > 0.3)
-                Positioned(
-                  bottom: _showBackButton ? 158 : 118,
-                  child: Opacity(
-                    opacity: spotlight,
-                    child: Column(
-                      children: [
-                        Text(
-                          widget.decision.label,
-                          style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 6,
-                            color: widget.decision.isDo
-                                ? AppColors.doGreen
-                                : AppColors.notRed,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.decision.subtitle,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                RevealResultHeader(
+                  decision: widget.decision,
+                  opacity: spotlight,
                 ),
-              if (_showBackButton)
+              if (_showChoices)
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: RevealBackButton(onPressed: widget.onDismiss),
+                  child: RevealChoicePanel(onChoice: widget.onChoice),
                 ),
             ],
           ),

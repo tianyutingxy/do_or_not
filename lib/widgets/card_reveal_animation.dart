@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/decision.dart';
+import '../models/user_response.dart';
 import '../theme/app_theme.dart';
 import 'playing_card_widget.dart';
-import 'reveal_back_button.dart';
+import 'reveal_choice_panel.dart';
+import 'reveal_result_header.dart';
 import 'spotlight_overlay.dart';
 
 class CardRevealAnimation extends StatefulWidget {
@@ -14,12 +16,12 @@ class CardRevealAnimation extends StatefulWidget {
     super.key,
     required this.decision,
     required this.onRevealed,
-    required this.onDismiss,
+    required this.onChoice,
   });
 
   final Decision decision;
-  final void Function(Decision decision) onRevealed;
-  final VoidCallback onDismiss;
+  final VoidCallback onRevealed;
+  final void Function(UserResponse response) onChoice;
 
   @override
   State<CardRevealAnimation> createState() => _CardRevealAnimationState();
@@ -35,7 +37,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
 
   late final _HandCards _hand;
 
-  bool _showBackButton = false;
+  bool _showChoices = false;
 
   static const _cardWidth = 118.0;
   static const _trailLags = [0.06, 0.13, 0.20, 0.28];
@@ -92,8 +94,8 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
     _resultController.forward();
     if (!mounted) return;
 
-    widget.onRevealed(widget.decision);
-    setState(() => _showBackButton = true);
+    widget.onRevealed();
+    setState(() => _showChoices = true);
   }
 
   @override
@@ -224,67 +226,22 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                 visible: deal2 > 0,
               ),
 
-              if (isRevealed && spotlight > 0.3) ...[
-                Positioned(
-                  top: 100,
-                  child: Opacity(
-                    opacity: spotlight * 0.9,
-                    child: Text(
-                      widget.decision.isDo ? 'Pocket Rockets' : 'The Hammer',
-                      style: TextStyle(
-                        fontSize: 14,
-                        letterSpacing: 3,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.gold.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
+              if (isRevealed && spotlight > 0.3)
+                RevealResultHeader(
+                  decision: widget.decision,
+                  opacity: spotlight,
+                  flavorTitle: widget.decision.isDo
+                      ? 'Pocket Rockets'
+                      : 'The Hammer',
+                  detailLine: _hand.handLabel,
                 ),
-                Positioned(
-                  bottom: _showBackButton ? 158 : 118,
-                  child: Opacity(
-                    opacity: spotlight,
-                    child: Column(
-                      children: [
-                        Text(
-                          widget.decision.label,
-                          style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 6,
-                            color: widget.decision.isDo
-                                ? AppColors.doGreen
-                                : AppColors.notRed,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _hand.handLabel,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white60,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.decision.subtitle,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
 
-              if (_showBackButton)
+              if (_showChoices)
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: RevealBackButton(onPressed: widget.onDismiss),
+                  child: RevealChoicePanel(onChoice: widget.onChoice),
                 ),
             ],
           ),
