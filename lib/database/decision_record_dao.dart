@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../models/decision_record.dart';
+import '../models/record_photo_paths.dart';
 import 'app_database.dart';
 
 class DecisionRecordDao {
@@ -21,7 +22,7 @@ class DecisionRecordDao {
     await db.update(
       'decision_records',
       {'is_marked': isMarked ? 1 : 0},
-      where: 'id = ?',
+      where: 'id = ? AND is_archived = 0',
       whereArgs: [id],
     );
   }
@@ -41,13 +42,81 @@ class DecisionRecordDao {
     );
   }
 
-  Future<List<DecisionRecord>> listMarked({int limit = 100, int offset = 0}) async {
+  Future<void> updatePhotoPaths(int id, List<String?> paths) async {
+    final db = await _db;
+    await db.update(
+      'decision_records',
+      {'photo_paths': RecordPhotoPaths.encode(paths)},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> saveNotes({
+    required int id,
+    String? decisionContext,
+    String? reflection,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final db = await _db;
+    final trimmedContext = decisionContext?.trim();
+    final trimmedReflection = reflection?.trim();
+    await db.update(
+      'decision_records',
+      {
+        'decision_context':
+            trimmedContext == null || trimmedContext.isEmpty ? null : trimmedContext,
+        'reflection':
+            trimmedReflection == null || trimmedReflection.isEmpty ? null : trimmedReflection,
+        'reflection_updated_at':
+            trimmedReflection == null || trimmedReflection.isEmpty ? null : now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> archive(int id, String reflection) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final db = await _db;
+    await db.update(
+      'decision_records',
+      {
+        'is_archived': 1,
+        'archived_at': now,
+        'reflection': reflection,
+        'reflection_updated_at': now,
+      },
+      where: 'id = ? AND is_marked = 1 AND is_archived = 0',
+      whereArgs: [id],
+    );
+  }
+
+  /// 待回顾：已标记、未归档。
+  Future<List<DecisionRecord>> listPendingReview({
+    int limit = 100,
+    int offset = 0,
+  }) async {
     final db = await _db;
     final rows = await db.query(
       'decision_records',
-      where: 'is_marked = ?',
-      whereArgs: [1],
+      where: 'is_marked = 1 AND is_archived = 0',
       orderBy: 'decided_at DESC',
+      limit: limit,
+      offset: offset,
+    );
+    return rows.map(DecisionRecord.fromRow).toList();
+  }
+
+  Future<List<DecisionRecord>> listArchived({
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final db = await _db;
+    final rows = await db.query(
+      'decision_records',
+      where: 'is_archived = 1',
+      orderBy: 'archived_at DESC',
       limit: limit,
       offset: offset,
     );
@@ -66,11 +135,21 @@ class DecisionRecordDao {
     return DecisionRecord.fromRow(rows.first);
   }
 
-  Future<int> countMarked() async {
+  /// 亮灯计数：待回顾的标记决定。
+  Future<int> countPendingReview() async {
     final db = await _db;
     final result = await db.rawQuery(
-      'SELECT COUNT(*) AS count FROM decision_records WHERE is_marked = 1',
+      'SELECT COUNT(*) AS count FROM decision_records WHERE is_marked = 1 AND is_archived = 0',
     );
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<void> deleteById(int id) async {
+    final db = await _db;
+    await db.delete(
+      'decision_records',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }

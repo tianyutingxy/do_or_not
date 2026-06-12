@@ -6,8 +6,9 @@ import '../models/decision_record.dart';
 import '../services/decision_record_service.dart';
 import '../theme/app_theme.dart';
 import '../screens/journal_detail_screen.dart';
+import 'swipe_delete_record_tile.dart';
 
-/// 可嵌入街景背面的决策档案列表。
+/// 决策档案列表面板（仅待回顾项）。
 class JournalPanel extends StatefulWidget {
   const JournalPanel({
     super.key,
@@ -34,7 +35,7 @@ class JournalPanelState extends State<JournalPanel> {
 
   Future<void> reload() async {
     setState(() => _loading = true);
-    final records = await widget.service.listMarked();
+    final records = await widget.service.listPendingReview();
     if (!mounted) return;
     setState(() {
       _records = records;
@@ -55,6 +56,12 @@ class JournalPanelState extends State<JournalPanel> {
       await reload();
       widget.onRecordsChanged?.call();
     }
+  }
+
+  Future<void> _deleteRecord(DecisionRecord record) async {
+    await widget.service.deleteRecord(record.id!);
+    await reload();
+    widget.onRecordsChanged?.call();
   }
 
   @override
@@ -96,50 +103,110 @@ class JournalPanelState extends State<JournalPanel> {
       itemBuilder: (context, index) {
         final record = _records[index];
         final localeName = Localizations.localeOf(context).toLanguageTag();
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
+        return SwipeDeleteRecordTile(
+          onDeleteConfirmed: () => _deleteRecord(record),
+          child: _PendingRecordTile(
+            record: record,
+            localeName: localeName,
+            l10n: l10n,
             onTap: () => _openDetail(record),
-            borderRadius: BorderRadius.circular(10),
-            child: Ink(
-              decoration: BoxDecoration(
-                color: AppColors.surface.withValues(alpha: 0.88),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.gold.withValues(alpha: 0.22)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PendingRecordTile extends StatelessWidget {
+  const _PendingRecordTile({
+    required this.record,
+    required this.localeName,
+    required this.l10n,
+    required this.onTap,
+  });
+
+  final DecisionRecord record;
+  final String localeName;
+  final AppLocalizations l10n;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.gold.withValues(alpha: 0.22)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
+                    if (record.isDemoExample) ...[
+                      _DemoBadge(label: l10n.journalDemoBadge),
+                      const SizedBox(width: 8),
+                    ],
                     Text(
                       record.formattedDate(l10n, localeName),
                       style: const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      record.summaryLine(l10n),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (record.reflection != null && record.reflection!.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        record.reflection!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white60, fontSize: 12),
-                      ),
-                    ],
                   ],
                 ),
-              ),
+                const SizedBox(height: 6),
+                Text(
+                  record.summaryLine(l10n),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                if (record.reflection != null && record.reflection!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    record.reflection!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  ),
+                ],
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+}
+
+class _DemoBadge extends StatelessWidget {
+  const _DemoBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.gold.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          color: AppColors.gold,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

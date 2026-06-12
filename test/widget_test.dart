@@ -17,7 +17,7 @@ void main() {
   test('Chinese locale strings are available', () {
     final l10n = lookupAppLocalizations(const Locale('zh'));
     expect(l10n.decideButton, '去吧');
-    expect(l10n.homeTagline, '二选一，命运替你决定');
+    expect(l10n.homeTagline, '二选一，喵喵替你决定');
   });
 
   test('English locale strings are available', () {

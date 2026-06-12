@@ -8,7 +8,7 @@ class AppDatabase {
   static String? _overridePath;
 
   static const _dbName = 'do_or_not.db';
-  static const _version = 1;
+  static const _version = 4;
 
   static void overridePathForTesting(String path) {
     _overridePath = path;
@@ -33,28 +33,58 @@ class AppDatabase {
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE decision_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            decided_at INTEGER NOT NULL,
-            reveal_style TEXT NOT NULL,
-            objective_decision TEXT NOT NULL,
-            user_response TEXT NOT NULL,
-            final_decision TEXT NOT NULL,
-            retry_count INTEGER NOT NULL DEFAULT 0,
-            is_marked INTEGER NOT NULL DEFAULT 0,
-            reflection TEXT,
-            reflection_updated_at INTEGER,
-            created_at INTEGER NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_decision_marked_time
-          ON decision_records (is_marked, decided_at DESC)
-        ''');
+      onCreate: _createSchema,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            'ALTER TABLE decision_records ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0',
+          );
+          await db.execute(
+            'ALTER TABLE decision_records ADD COLUMN archived_at INTEGER',
+          );
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_decision_active_marked
+            ON decision_records (is_marked, is_archived, decided_at DESC)
+          ''');
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE decision_records ADD COLUMN decision_context TEXT',
+          );
+        }
+        if (oldVersion < 4) {
+          await db.execute(
+            'ALTER TABLE decision_records ADD COLUMN photo_paths TEXT',
+          );
+        }
       },
     );
     return _database!;
+  }
+
+  static Future<void> _createSchema(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE decision_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        decided_at INTEGER NOT NULL,
+        reveal_style TEXT NOT NULL,
+        objective_decision TEXT NOT NULL,
+        user_response TEXT NOT NULL,
+        final_decision TEXT NOT NULL,
+        retry_count INTEGER NOT NULL DEFAULT 0,
+        is_marked INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        decision_context TEXT,
+        photo_paths TEXT,
+        reflection TEXT,
+        reflection_updated_at INTEGER,
+        archived_at INTEGER,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE INDEX idx_decision_active_marked
+      ON decision_records (is_marked, is_archived, decided_at DESC)
+    ''');
   }
 }

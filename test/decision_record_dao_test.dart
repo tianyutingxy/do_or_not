@@ -46,30 +46,31 @@ void main() {
     expect(found!.objectiveDecision, Decision.doIt);
     expect(found.retryCount, 2);
     expect(found.isMarked, isFalse);
+    expect(found.isArchived, isFalse);
   });
 
-  test('listMarked only returns marked records', () async {
+  test('listPendingReview only returns marked unarchived records', () async {
     final dao = DecisionRecordDao();
     await dao.insert(sampleRecord());
     final marked = await dao.insert(sampleRecord(isMarked: true));
     await dao.insert(sampleRecord(isMarked: true));
 
-    final results = await dao.listMarked();
+    final results = await dao.listPendingReview();
     expect(results, hasLength(2));
-    expect(results.every((r) => r.isMarked), isTrue);
+    expect(results.every((r) => r.isPendingReview), isTrue);
     expect(results.first.id, marked.id);
   });
 
-  test('updateMark toggles visibility in listMarked', () async {
+  test('updateMark toggles visibility in listPendingReview', () async {
     final dao = DecisionRecordDao();
     final record = await dao.insert(sampleRecord());
 
     await dao.updateMark(record.id!, true);
-    expect(await dao.countMarked(), 1);
+    expect(await dao.countPendingReview(), 1);
 
     await dao.updateMark(record.id!, false);
-    expect(await dao.countMarked(), 0);
-    expect(await dao.listMarked(), isEmpty);
+    expect(await dao.countPendingReview(), 0);
+    expect(await dao.listPendingReview(), isEmpty);
   });
 
   test('updateReflection persists text', () async {
@@ -81,5 +82,86 @@ void main() {
 
     expect(updated?.reflection, '后来证明是对的');
     expect(updated?.reflectionUpdatedAt, isNotNull);
+  });
+
+  test('archive moves record out of pending and into archived list', () async {
+    final dao = DecisionRecordDao();
+    final record = await dao.insert(sampleRecord(isMarked: true));
+
+    await dao.archive(record.id!, '这次决定很正确');
+    final archived = await dao.findById(record.id!);
+
+    expect(archived?.isArchived, isTrue);
+    expect(archived?.archivedAt, isNotNull);
+    expect(archived?.reflection, '这次决定很正确');
+    expect(await dao.listPendingReview(), isEmpty);
+    expect(await dao.countPendingReview(), 0);
+    expect(await dao.listArchived(), hasLength(1));
+  });
+
+  test('updateMark does not affect archived records', () async {
+    final dao = DecisionRecordDao();
+    final record = await dao.insert(sampleRecord(isMarked: true));
+    await dao.archive(record.id!, '心得');
+
+    await dao.updateMark(record.id!, false);
+    final stillArchived = await dao.findById(record.id!);
+
+    expect(stillArchived?.isArchived, isTrue);
+    expect(stillArchived?.isMarked, isTrue);
+  });
+
+  test('updateReflection works on archived records', () async {
+    final dao = DecisionRecordDao();
+    final record = await dao.insert(sampleRecord(isMarked: true));
+    await dao.archive(record.id!, '初稿');
+
+    await dao.updateReflection(record.id!, '修订后的心得');
+    final updated = await dao.findById(record.id!);
+
+    expect(updated?.isArchived, isTrue);
+    expect(updated?.reflection, '修订后的心得');
+  });
+
+  test('saveNotes persists context and reflection', () async {
+    final dao = DecisionRecordDao();
+    final record = await dao.insert(sampleRecord(isMarked: true));
+
+    await dao.saveNotes(
+      id: record.id!,
+      decisionContext: '是否买房',
+      reflection: '后来证明是对的',
+    );
+    final updated = await dao.findById(record.id!);
+
+    expect(updated?.decisionContext, '是否买房');
+    expect(updated?.reflection, '后来证明是对的');
+    expect(updated?.reflectionUpdatedAt, isNotNull);
+  });
+
+  test('updatePhotoPaths persists encoded paths', () async {
+    final dao = DecisionRecordDao();
+    final record = await dao.insert(sampleRecord(isMarked: true));
+
+    await dao.updatePhotoPaths(record.id!, [
+      '/tmp/a.jpg',
+      null,
+      '/tmp/c.jpg',
+    ]);
+    final updated = await dao.findById(record.id!);
+
+    expect(updated?.photoPaths[0], '/tmp/a.jpg');
+    expect(updated?.photoPaths[1], isNull);
+    expect(updated?.photoPaths[2], '/tmp/c.jpg');
+  });
+
+  test('deleteById removes record', () async {
+    final dao = DecisionRecordDao();
+    final record = await dao.insert(sampleRecord(isMarked: true));
+
+    await dao.deleteById(record.id!);
+
+    expect(await dao.findById(record.id!), isNull);
+    expect(await dao.listPendingReview(), isEmpty);
   });
 }

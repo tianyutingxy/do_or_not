@@ -1,9 +1,10 @@
 import 'animation_style.dart';
 import 'decision.dart';
+import 'record_photo_paths.dart';
 import 'user_response.dart';
 
 class DecisionRecord {
-  const DecisionRecord({
+  DecisionRecord({
     this.id,
     required this.decidedAt,
     required this.revealStyle,
@@ -12,10 +13,14 @@ class DecisionRecord {
     required this.finalDecision,
     required this.retryCount,
     this.isMarked = false,
+    this.isArchived = false,
+    this.decisionContext,
+    List<String?>? photoPaths,
     this.reflection,
     this.reflectionUpdatedAt,
+    this.archivedAt,
     required this.createdAt,
-  });
+  }) : photoPaths = RecordPhotoPaths.normalize(photoPaths);
 
   final int? id;
   final DateTime decidedAt;
@@ -25,9 +30,20 @@ class DecisionRecord {
   final Decision finalDecision;
   final int retryCount;
   final bool isMarked;
+  final bool isArchived;
+  final String? decisionContext;
+  final List<String?> photoPaths;
   final String? reflection;
   final DateTime? reflectionUpdatedAt;
+  final DateTime? archivedAt;
   final DateTime createdAt;
+
+  /// 待回顾：已标记且未归档。
+  bool get isPendingReview => isMarked && !isArchived;
+
+  bool get isDemoExample =>
+      reflection?.startsWith('【示例】') == true ||
+      reflection?.startsWith('[Demo]') == true;
 
   DecisionRecord copyWith({
     int? id,
@@ -38,9 +54,15 @@ class DecisionRecord {
     Decision? finalDecision,
     int? retryCount,
     bool? isMarked,
+    bool? isArchived,
+    String? decisionContext,
+    List<String?>? photoPaths,
     String? reflection,
     DateTime? reflectionUpdatedAt,
+    DateTime? archivedAt,
+    bool clearDecisionContext = false,
     bool clearReflection = false,
+    bool clearArchivedAt = false,
     DateTime? createdAt,
   }) {
     return DecisionRecord(
@@ -52,9 +74,15 @@ class DecisionRecord {
       finalDecision: finalDecision ?? this.finalDecision,
       retryCount: retryCount ?? this.retryCount,
       isMarked: isMarked ?? this.isMarked,
+      isArchived: isArchived ?? this.isArchived,
+      decisionContext: clearDecisionContext
+          ? null
+          : (decisionContext ?? this.decisionContext),
+      photoPaths: photoPaths ?? this.photoPaths,
       reflection: clearReflection ? null : (reflection ?? this.reflection),
       reflectionUpdatedAt:
           clearReflection ? null : (reflectionUpdatedAt ?? this.reflectionUpdatedAt),
+      archivedAt: clearArchivedAt ? null : (archivedAt ?? this.archivedAt),
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -70,12 +98,18 @@ class DecisionRecord {
       finalDecision: Decision.values.byName(row['final_decision']! as String),
       retryCount: row['retry_count']! as int,
       isMarked: (row['is_marked']! as int) == 1,
+      isArchived: (row['is_archived'] as int? ?? 0) == 1,
+      decisionContext: row['decision_context'] as String?,
+      photoPaths: RecordPhotoPaths.decode(row['photo_paths'] as String?),
       reflection: row['reflection'] as String?,
       reflectionUpdatedAt: row['reflection_updated_at'] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(
               row['reflection_updated_at']! as int,
             ),
+      archivedAt: row['archived_at'] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(row['archived_at']! as int),
       createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at']! as int),
     );
   }
@@ -90,8 +124,12 @@ class DecisionRecord {
       'final_decision': finalDecision.name,
       'retry_count': retryCount,
       'is_marked': isMarked ? 1 : 0,
+      'is_archived': isArchived ? 1 : 0,
+      'decision_context': decisionContext,
+      'photo_paths': RecordPhotoPaths.encode(photoPaths),
       'reflection': reflection,
       'reflection_updated_at': reflectionUpdatedAt?.millisecondsSinceEpoch,
+      'archived_at': archivedAt?.millisecondsSinceEpoch,
       'created_at': createdAt.millisecondsSinceEpoch,
     };
   }

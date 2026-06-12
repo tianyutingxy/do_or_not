@@ -17,7 +17,7 @@ import '../widgets/card_reveal_animation.dart';
 import '../widgets/coin_reveal_animation.dart';
 import '../widgets/pixel_cat/home_pixel_cat.dart';
 import '../widgets/pixel_cat/pixel_paw_slap.dart';
-import '../widgets/journal_lamp_button.dart';
+import '../widgets/journal_door_button.dart';
 import 'journal_screen.dart';
 import 'stats_screen.dart';
 
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _patrolAreaKey = GlobalKey();
 
   UserStats _stats = const UserStats();
-  RevealStyle _style = RevealStyle.coin;
+  RevealStyle _style = RevealStyle.cards;
   bool _isDeciding = false;
   bool _pawSlapping = false;
   Rect? _pawTargetRect;
@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _load() async {
     final stats = await _statsService.loadStats();
     final styleName = await _statsService.loadAnimationStyle();
-    final markedCount = await _decisionRecordService.countMarked();
+    final markedCount = await _decisionRecordService.countPendingReview();
     if (!mounted) return;
     setState(() {
       _stats = stats;
@@ -72,14 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
       if (styleName != null) {
         _style = RevealStyle.values.firstWhere(
           (s) => s.name == styleName,
-          orElse: () => RevealStyle.coin,
+          orElse: () => RevealStyle.cards,
         );
       }
     });
   }
 
   Future<void> _refreshJournalBadge() async {
-    final markedCount = await _decisionRecordService.countMarked();
+    final markedCount = await _decisionRecordService.countPendingReview();
     if (!mounted) return;
     setState(() => _hasMarkedRecords = markedCount > 0);
   }
@@ -320,18 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      const Spacer(),
-                      JournalLampButton(
-                        isBright: _hasMarkedRecords,
-                        enabled: !_isDeciding && !_pawSlapping,
-                        tooltip: l10n.journalTitle,
-                        onTap: _openJournal,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     'DO OR NOT',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -353,10 +342,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     key: _patrolAreaKey,
                     child: const SizedBox.expand(),
                   ),
-                  _DecideButton(
-                    onPressed: _isDeciding || _pawSlapping ? null : _decide,
-                    label: l10n.decideButton,
-                    tapLabel: l10n.decideTap,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 200,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        _DecideButton(
+                          onPressed: _isDeciding || _pawSlapping ? null : _decide,
+                          label: l10n.decideButton,
+                          tapLabel: l10n.decideTap,
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 22,
+                          child: JournalDoorButton(
+                            isOpen: _hasMarkedRecords,
+                            enabled: !_isDeciding && !_pawSlapping,
+                            tooltip: l10n.journalTitle,
+                            onTap: _openJournal,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   _MiniStatsBar(stats: _stats, onTap: _openStats),
