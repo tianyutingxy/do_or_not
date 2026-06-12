@@ -568,10 +568,12 @@ class _MiniStatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
@@ -580,19 +582,23 @@ class _MiniStatsBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _dot(AppColors.doGreen, 'DO ${stats.doCount}'),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('·', style: TextStyle(color: Colors.white24)),
-            ),
-            _dot(AppColors.notRed, 'NOT ${stats.notCount}'),
-            const SizedBox(width: 12),
+            _dot(AppColors.doGreen, '${l10n.choiceComply} ${stats.complyCount}'),
+            _separator,
+            _dot(AppColors.notRed, '${l10n.choiceRebel} ${stats.rebelCount}'),
+            _separator,
+            _dot(AppColors.gold, '${l10n.choiceRetry} ${stats.retryPressCount}'),
+            const SizedBox(width: 8),
             const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
           ],
         ),
       ),
     );
   }
+
+  static const _separator = Padding(
+    padding: EdgeInsets.symmetric(horizontal: 8),
+    child: Text('·', style: TextStyle(color: Colors.white24)),
+  );
 
   Widget _dot(Color color, String text) {
     return Row(

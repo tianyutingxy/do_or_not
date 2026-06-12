@@ -70,46 +70,6 @@ class StatsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 28),
-            _SectionTitle(l10n.statsFinalChoiceSection),
-            const SizedBox(height: 12),
-            _RatioBar(
-              leftPercent: doPct,
-              leftColor: AppColors.doGreen,
-              rightColor: AppColors.notRed,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    label: 'DO',
-                    subtitle: l10n.decisionDoSubtitle,
-                    count: stats.doCount,
-                    percent: doPct,
-                    color: AppColors.doGreen,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    label: 'NOT',
-                    subtitle: l10n.decisionNotSubtitle,
-                    count: stats.notCount,
-                    percent: notPct,
-                    color: AppColors.notRed,
-                  ),
-                ),
-              ],
-            ),
-            if (stats.finalizedCount > 0) ...[
-              const SizedBox(height: 10),
-              Text(
-                stats.doNotLabel(l10n),
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 28),
             _SectionTitle(l10n.statsHesitationSection),
             const SizedBox(height: 12),
             _StatCard(
@@ -158,6 +118,46 @@ class StatsScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 28),
+            _SectionTitle(l10n.statsFinalChoiceSection),
+            const SizedBox(height: 12),
+            _RatioBar(
+              leftPercent: doPct,
+              leftColor: AppColors.doGreen,
+              rightColor: AppColors.notRed,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    label: 'DO',
+                    subtitle: l10n.decisionDoSubtitle,
+                    count: stats.doCount,
+                    percent: doPct,
+                    color: AppColors.doGreen,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    label: 'NOT',
+                    subtitle: l10n.decisionNotSubtitle,
+                    count: stats.notCount,
+                    percent: notPct,
+                    color: AppColors.notRed,
+                  ),
+                ),
+              ],
+            ),
+            if (stats.finalizedCount > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                stats.doNotLabel(l10n),
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 24),
             Text(
               l10n.statsFinalizedCount(stats.finalizedCount),
