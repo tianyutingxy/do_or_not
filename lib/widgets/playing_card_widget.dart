@@ -92,12 +92,24 @@ class PlayingCardWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
-            child: Text(
-              '♠♥♦♣',
-              style: TextStyle(
-                fontSize: width * 0.18,
-                color: AppColors.gold.withValues(alpha: 0.5 * t),
-                letterSpacing: 2,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final suit in Suit.values)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: width * 0.012),
+                      child: Text(
+                        suit.symbol,
+                        style: TextStyle(
+                          fontSize: width * 0.18,
+                          color: suit.color.withValues(alpha: 0.72 * t),
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
