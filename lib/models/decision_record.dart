@@ -1,6 +1,7 @@
 import 'animation_style.dart';
 import 'decision.dart';
 import 'record_photo_paths.dart';
+import 'record_tags.dart';
 import 'user_response.dart';
 
 class DecisionRecord {
@@ -16,11 +17,13 @@ class DecisionRecord {
     this.isArchived = false,
     this.decisionContext,
     List<String?>? photoPaths,
+    List<String>? tags,
     this.reflection,
     this.reflectionUpdatedAt,
     this.archivedAt,
     required this.createdAt,
-  }) : photoPaths = RecordPhotoPaths.normalize(photoPaths);
+  })  : photoPaths = RecordPhotoPaths.normalize(photoPaths),
+        tags = RecordTags.normalize(tags);
 
   final int? id;
   final DateTime decidedAt;
@@ -33,6 +36,7 @@ class DecisionRecord {
   final bool isArchived;
   final String? decisionContext;
   final List<String?> photoPaths;
+  final List<String> tags;
   final String? reflection;
   final DateTime? reflectionUpdatedAt;
   final DateTime? archivedAt;
@@ -57,6 +61,7 @@ class DecisionRecord {
     bool? isArchived,
     String? decisionContext,
     List<String?>? photoPaths,
+    List<String>? tags,
     String? reflection,
     DateTime? reflectionUpdatedAt,
     DateTime? archivedAt,
@@ -79,6 +84,7 @@ class DecisionRecord {
           ? null
           : (decisionContext ?? this.decisionContext),
       photoPaths: photoPaths ?? this.photoPaths,
+      tags: tags ?? this.tags,
       reflection: clearReflection ? null : (reflection ?? this.reflection),
       reflectionUpdatedAt:
           clearReflection ? null : (reflectionUpdatedAt ?? this.reflectionUpdatedAt),
@@ -101,6 +107,7 @@ class DecisionRecord {
       isArchived: (row['is_archived'] as int? ?? 0) == 1,
       decisionContext: row['decision_context'] as String?,
       photoPaths: RecordPhotoPaths.decode(row['photo_paths'] as String?),
+      tags: RecordTags.decode(row['tags'] as String?),
       reflection: row['reflection'] as String?,
       reflectionUpdatedAt: row['reflection_updated_at'] == null
           ? null
@@ -127,6 +134,7 @@ class DecisionRecord {
       'is_archived': isArchived ? 1 : 0,
       'decision_context': decisionContext,
       'photo_paths': RecordPhotoPaths.encode(photoPaths),
+      'tags': RecordTags.encode(tags),
       'reflection': reflection,
       'reflection_updated_at': reflectionUpdatedAt?.millisecondsSinceEpoch,
       'archived_at': archivedAt?.millisecondsSinceEpoch,

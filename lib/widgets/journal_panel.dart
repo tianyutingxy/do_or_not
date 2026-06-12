@@ -5,7 +5,12 @@ import '../l10n/decision_record_l10n.dart';
 import '../models/decision_record.dart';
 import '../services/decision_record_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/record_list_utils.dart';
 import '../screens/journal_detail_screen.dart';
+import 'decision_tag_filter_bar.dart';
+import 'decision_tag_widgets.dart';
+import 'journal_decision_heatmap.dart';
+import 'journal_timeline_view.dart';
 import 'swipe_delete_record_tile.dart';
 
 /// 决策档案列表面板（仅待回顾项）。
@@ -26,6 +31,8 @@ class JournalPanel extends StatefulWidget {
 class JournalPanelState extends State<JournalPanel> {
   List<DecisionRecord> _records = const [];
   bool _loading = true;
+  Set<String> _activeTagFilters = {};
+  JournalViewMode _viewMode = JournalViewMode.list;
 
   @override
   void initState() {
@@ -42,6 +49,9 @@ class JournalPanelState extends State<JournalPanel> {
       _loading = false;
     });
   }
+
+  List<DecisionRecord> get _filteredRecords =>
+      filterRecordsByTags(_records, _activeTagFilters);
 
   Future<void> _openDetail(DecisionRecord record) async {
     final changed = await Navigator.of(context).push<bool>(
@@ -64,6 +74,21 @@ class JournalPanelState extends State<JournalPanel> {
     widget.onRecordsChanged?.call();
   }
 
+  Widget _buildTile(DecisionRecord record) {
+    final localeName = Localizations.localeOf(context).toLanguageTag();
+    final l10n = AppLocalizations.of(context);
+
+    return SwipeDeleteRecordTile(
+      onDeleteConfirmed: () => _deleteRecord(record),
+      child: _PendingRecordTile(
+        record: record,
+        localeName: localeName,
+        l10n: l10n,
+        onTap: () => _openDetail(record),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -74,45 +99,76 @@ class JournalPanelState extends State<JournalPanel> {
       );
     }
 
-    if (_records.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.star_outline_rounded, size: 40, color: Colors.white24),
-              const SizedBox(height: 12),
-              Text(l10n.journalEmpty, textAlign: TextAlign.center),
-              const SizedBox(height: 6),
-              Text(
-                l10n.journalEmptyHint,
-                style: const TextStyle(color: Colors.white38, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final filtered = _filteredRecords;
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      itemCount: _records.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final record = _records[index];
-        final localeName = Localizations.localeOf(context).toLanguageTag();
-        return SwipeDeleteRecordTile(
-          onDeleteConfirmed: () => _deleteRecord(record),
-          child: _PendingRecordTile(
-            record: record,
-            localeName: localeName,
-            l10n: l10n,
-            onTap: () => _openDetail(record),
-          ),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecisionTagFilterBar(
+          selectedTagIds: _activeTagFilters,
+          onChanged: (next) => setState(() => _activeTagFilters = next),
+        ),
+        Expanded(
+          child: _records.isEmpty
+              ? _EmptyState(
+                  title: l10n.journalEmpty,
+                  hint: l10n.journalEmptyHint,
+                )
+              : filtered.isEmpty
+                  ? _EmptyState(
+                      title: l10n.journalFilterEmpty,
+                      hint: l10n.journalFilterEmptyHint,
+                    )
+                  : _viewMode == JournalViewMode.list
+                      ? ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) =>
+                              _buildTile(filtered[index]),
+                        )
+                      : JournalDecisionHeatmap(
+                          records: filtered,
+                          localeName:
+                              Localizations.localeOf(context).toLanguageTag(),
+                          onRecordTap: _openDetail,
+                        ),
+        ),
+        JournalViewModeBottomBar(
+          mode: _viewMode,
+          onChanged: (mode) => setState(() => _viewMode = mode),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.title, required this.hint});
+
+  final String title;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.star_outline_rounded, size: 40, color: Colors.white24),
+            const SizedBox(height: 12),
+            Text(title, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text(
+              hint,
+              style: const TextStyle(color: Colors.white38, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -167,6 +223,7 @@ class _PendingRecordTile extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
+                RecordTagBadges(tags: record.tags),
                 if (record.reflection != null && record.reflection!.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(

@@ -5,6 +5,11 @@ import '../l10n/decision_record_l10n.dart';
 import '../models/decision_record.dart';
 import '../services/decision_record_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/record_list_utils.dart';
+import '../widgets/decision_tag_filter_bar.dart';
+import '../widgets/decision_tag_widgets.dart';
+import '../widgets/journal_decision_heatmap.dart';
+import '../widgets/journal_timeline_view.dart';
 import '../widgets/swipe_delete_record_tile.dart';
 import 'journal_detail_screen.dart';
 
@@ -23,6 +28,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       widget._service ?? DecisionRecordService();
   List<DecisionRecord> _records = const [];
   bool _loading = true;
+  Set<String> _activeTagFilters = {};
+  JournalViewMode _viewMode = JournalViewMode.list;
 
   @override
   void initState() {
@@ -39,6 +46,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       _loading = false;
     });
   }
+
+  List<DecisionRecord> get _filteredRecords =>
+      filterRecordsByTags(_records, _activeTagFilters);
 
   Future<void> _openDetail(DecisionRecord record) async {
     final changed = await Navigator.of(context).push<bool>(
@@ -57,9 +67,25 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     await _load();
   }
 
+  Widget _buildTile(DecisionRecord record) {
+    final localeName = Localizations.localeOf(context).toLanguageTag();
+    final l10n = AppLocalizations.of(context);
+
+    return SwipeDeleteRecordTile(
+      onDeleteConfirmed: () => _deleteRecord(record),
+      child: _ArchiveTile(
+        record: record,
+        localeName: localeName,
+        l10n: l10n,
+        onTap: () => _openDetail(record),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final filtered = _filteredRecords;
 
     return Scaffold(
       appBar: AppBar(
@@ -69,46 +95,87 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
-          : _records.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.inventory_2_outlined,
-                            size: 48, color: Colors.white24),
-                        const SizedBox(height: 16),
-                        Text(l10n.journalArchiveEmpty, textAlign: TextAlign.center),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.journalArchiveEmptyHint,
-                          style: const TextStyle(color: Colors.white38, fontSize: 14),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                  itemCount: _records.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final record = _records[index];
-                    final localeName =
-                        Localizations.localeOf(context).toLanguageTag();
-                    return SwipeDeleteRecordTile(
-                      onDeleteConfirmed: () => _deleteRecord(record),
-                      child: _ArchiveTile(
-                        record: record,
-                        localeName: localeName,
-                        l10n: l10n,
-                        onTap: () => _openDetail(record),
-                      ),
-                    );
-                  },
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DecisionTagFilterBar(
+                  selectedTagIds: _activeTagFilters,
+                  onChanged: (next) => setState(() => _activeTagFilters = next),
                 ),
+                Expanded(
+                  child: _records.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.inventory_2_outlined,
+                                    size: 48, color: Colors.white24),
+                                const SizedBox(height: 16),
+                                Text(l10n.journalArchiveEmpty,
+                                    textAlign: TextAlign.center),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.journalArchiveEmptyHint,
+                                  style: const TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : filtered.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.filter_alt_off_outlined,
+                                        size: 40, color: Colors.white24),
+                                    const SizedBox(height: 12),
+                                    Text(l10n.journalFilterEmpty,
+                                        textAlign: TextAlign.center),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      l10n.journalFilterEmptyHint,
+                                      style: const TextStyle(
+                                        color: Colors.white38,
+                                        fontSize: 13,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : _viewMode == JournalViewMode.list
+                              ? ListView.separated(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                                  itemCount: filtered.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 10),
+                                  itemBuilder: (context, index) =>
+                                      _buildTile(filtered[index]),
+                                )
+                              : JournalDecisionHeatmap(
+                                  records: filtered,
+                                  localeName: Localizations.localeOf(context)
+                                      .toLanguageTag(),
+                                  onRecordTap: _openDetail,
+                                ),
+                ),
+                JournalViewModeBottomBar(
+                  mode: _viewMode,
+                  onChanged: (mode) => setState(() => _viewMode = mode),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -201,6 +268,7 @@ class _ArchiveTile extends StatelessWidget {
                     fontSize: 15,
                   ),
                 ),
+                RecordTagBadges(tags: record.tags),
                 if (record.reflection != null && record.reflection!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(

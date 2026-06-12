@@ -123,7 +123,7 @@ void main() {
     expect(updated?.reflection, '修订后的心得');
   });
 
-  test('saveNotes persists context and reflection', () async {
+  test('saveNotes persists context, reflection, and tags', () async {
     final dao = DecisionRecordDao();
     final record = await dao.insert(sampleRecord(isMarked: true));
 
@@ -131,11 +131,13 @@ void main() {
       id: record.id!,
       decisionContext: '是否买房',
       reflection: '后来证明是对的',
+      tags: const ['work', 'spending'],
     );
     final updated = await dao.findById(record.id!);
 
     expect(updated?.decisionContext, '是否买房');
     expect(updated?.reflection, '后来证明是对的');
+    expect(updated?.tags, ['work', 'spending']);
     expect(updated?.reflectionUpdatedAt, isNotNull);
   });
 

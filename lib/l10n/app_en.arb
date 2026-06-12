@@ -72,7 +72,7 @@
   "journalTitle": "Decision archive room",
   "journalDetailTitle": "Decision journal",
   "journalEmpty": "No marked decisions yet",
-  "journalEmptyHint": "Star important decisions to find them later",
+  "journalEmptyHint": "Star important decisions to find them later; add tags to filter",
   "reflectionPlaceholder": "Write your reflection once you know the outcome…",
   "reflectionSaved": "Saved",
   "unmarkDecision": "Remove mark",
@@ -107,7 +107,7 @@
   "journalPendingSection": "Pending review",
   "journalArchiveTitle": "Archive",
   "journalArchiveEmpty": "No archived decisions yet",
-  "journalArchiveEmptyHint": "After you finish a review with a reflection, it moves here",
+  "journalArchiveEmptyHint": "After you finish a review with a reflection, it moves here; filter by tag or switch to heatmap",
   "journalCompleteReview": "Complete review & archive",
   "journalArchiveConfirmTitle": "Archive this decision?",
   "journalArchiveConfirmBody": "It will leave your journal and cannot be undone. Make sure your reflection is ready.",
@@ -126,5 +126,44 @@
   "aboutAuthorQuote": "Big or small, every choice is half fate and half your call. Once it's made, no refunds—just meow twice and keep walking. (=^･ω･^) 丿",
   "aboutContactLabel": "Contact",
   "aboutContactCopied": "Email copied",
-  "aboutGotIt": "Got it"
+  "aboutGotIt": "Got it",
+  "journalTagsLabel": "Tags",
+  "journalTagsHint": "Pick up to 3 tags",
+  "journalTagWork": "Work",
+  "journalTagRelationship": "Relationship",
+  "journalTagSpending": "Spending",
+  "journalTagHealth": "Health",
+  "journalTagLife": "Life",
+  "journalTagOther": "Other",
+  "journalFilterAll": "All",
+  "journalFilterEmpty": "No matching tags",
+  "journalFilterEmptyHint": "Try other tags, or tap All",
+  "journalViewList": "List",
+  "journalViewHeatmap": "Heatmap",
+  "journalHeatmapLess": "Less",
+  "journalHeatmapMore": "More",
+  "journalHeatmapMon": "M",
+  "journalHeatmapWed": "W",
+  "journalHeatmapFri": "F",
+  "journalHeatmapSummary": "{count} decisions in the last {weeks} weeks · {days} active days",
+  "@journalHeatmapSummary": {
+    "placeholders": {
+      "weeks": {"type": "int"},
+      "count": {"type": "int"},
+      "days": {"type": "int"}
+    }
+  },
+  "journalHeatmapBusiestWeek": "Busiest week: {count}",
+  "@journalHeatmapBusiestWeek": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "journalHeatmapDayTitle": "{date} · {count}",
+  "@journalHeatmapDayTitle": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  }
 }

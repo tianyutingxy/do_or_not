@@ -72,7 +72,7 @@
   "journalTitle": "决策档案室",
   "journalDetailTitle": "决策档案",
   "journalEmpty": "还没有标记的决定",
-  "journalEmptyHint": "重要选择落定后，点星标记即可找回",
+  "journalEmptyHint": "重要选择落定后，点星标记即可找回；可为决定加上标签，方便筛选",
   "reflectionPlaceholder": "结果揭晓后，写下你的心得…",
   "reflectionSaved": "已保存",
   "unmarkDecision": "取消标记",
@@ -107,7 +107,7 @@
   "journalPendingSection": "待回顾",
   "journalArchiveTitle": "归档",
   "journalArchiveEmpty": "还没有归档的决定",
-  "journalArchiveEmptyHint": "完成回顾并写下心得后，决定会归档到这里",
+  "journalArchiveEmptyHint": "完成回顾并写下心得后，决定会归档到这里；可按标签筛选、切换热力图查看",
   "journalCompleteReview": "完成回顾并归档",
   "journalArchiveConfirmTitle": "确认归档？",
   "journalArchiveConfirmBody": "归档后此决定将从决策档案移出，且不可撤销。请确认心得已写好。",
@@ -126,5 +126,44 @@
   "aboutAuthorQuote": "人生大大小小的决定，一半是冥冥中的定数，一半是自己拍的板。反正选都选了，后悔也不退款，喵两声继续往前走就好，(=^･ω･^) 丿",
   "aboutContactLabel": "联系方式",
   "aboutContactCopied": "邮箱已复制",
-  "aboutGotIt": "知道了"
+  "aboutGotIt": "知道了",
+  "journalTagsLabel": "标签",
+  "journalTagsHint": "最多选择 3 个标签",
+  "journalTagWork": "工作",
+  "journalTagRelationship": "感情",
+  "journalTagSpending": "消费",
+  "journalTagHealth": "健康",
+  "journalTagLife": "生活",
+  "journalTagOther": "其他",
+  "journalFilterAll": "全部",
+  "journalFilterEmpty": "没有匹配的标签",
+  "journalFilterEmptyHint": "试试选择其他标签，或点「全部」查看",
+  "journalViewList": "列表",
+  "journalViewHeatmap": "热力",
+  "journalHeatmapLess": "少",
+  "journalHeatmapMore": "多",
+  "journalHeatmapMon": "一",
+  "journalHeatmapWed": "三",
+  "journalHeatmapFri": "五",
+  "journalHeatmapSummary": "近 {weeks} 周共 {count} 次决定 · 活跃 {days} 天",
+  "@journalHeatmapSummary": {
+    "placeholders": {
+      "weeks": {"type": "int"},
+      "count": {"type": "int"},
+      "days": {"type": "int"}
+    }
+  },
+  "journalHeatmapBusiestWeek": "最忙的一周：{count} 次",
+  "@journalHeatmapBusiestWeek": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "journalHeatmapDayTitle": "{date} · {count} 条",
+  "@journalHeatmapDayTitle": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  }
 }

@@ -8,7 +8,7 @@ class AppDatabase {
   static String? _overridePath;
 
   static const _dbName = 'do_or_not.db';
-  static const _version = 4;
+  static const _version = 5;
 
   static void overridePathForTesting(String path) {
     _overridePath = path;
@@ -57,6 +57,11 @@ class AppDatabase {
             'ALTER TABLE decision_records ADD COLUMN photo_paths TEXT',
           );
         }
+        if (oldVersion < 5) {
+          await db.execute(
+            'ALTER TABLE decision_records ADD COLUMN tags TEXT',
+          );
+        }
       },
     );
     return _database!;
@@ -76,6 +81,7 @@ class AppDatabase {
         is_archived INTEGER NOT NULL DEFAULT 0,
         decision_context TEXT,
         photo_paths TEXT,
+        tags TEXT,
         reflection TEXT,
         reflection_updated_at INTEGER,
         archived_at INTEGER,

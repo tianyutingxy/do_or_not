@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../models/decision_record.dart';
 import '../models/record_photo_paths.dart';
+import '../models/record_tags.dart';
 import 'app_database.dart';
 
 class DecisionRecordDao {
@@ -56,6 +57,7 @@ class DecisionRecordDao {
     required int id,
     String? decisionContext,
     String? reflection,
+    List<String>? tags,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final db = await _db;
@@ -70,6 +72,7 @@ class DecisionRecordDao {
             trimmedReflection == null || trimmedReflection.isEmpty ? null : trimmedReflection,
         'reflection_updated_at':
             trimmedReflection == null || trimmedReflection.isEmpty ? null : now,
+        'tags': RecordTags.encode(RecordTags.normalize(tags)),
       },
       where: 'id = ?',
       whereArgs: [id],

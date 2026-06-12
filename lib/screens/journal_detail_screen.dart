@@ -10,6 +10,7 @@ import '../models/user_response.dart';
 import '../services/decision_record_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/journal_photo_slots.dart';
+import '../widgets/decision_tag_widgets.dart';
 
 class JournalDetailScreen extends StatefulWidget {
   const JournalDetailScreen({
@@ -36,6 +37,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
   bool _archiving = false;
   bool _pickingPhoto = false;
   bool _changed = false;
+  List<String> _selectedTags = const [];
 
   @override
   void initState() {
@@ -58,6 +60,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
       _loading = false;
       _contextController.text = record?.decisionContext ?? '';
       _reflectionController.text = record?.reflection ?? '';
+      _selectedTags = record?.tags ?? const [];
     });
   }
 
@@ -98,6 +101,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
       id: record!.id!,
       decisionContext: _contextController.text,
       reflection: _reflectionController.text,
+      tags: _selectedTags,
     );
     if (!mounted) return;
 
@@ -185,6 +189,7 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
       id: record.id!,
       decisionContext: _contextController.text,
       reflection: reflection,
+      tags: _selectedTags,
     );
     await _service.archiveWithReflection(record.id!, reflection);
     if (!mounted) return;
@@ -353,6 +358,21 @@ class _JournalDetailScreenState extends State<JournalDetailScreen> {
                 minLines: 2,
                 maxLines: 4,
                 decoration: _noteFieldDecoration(l10n.journalContextPlaceholder),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.journalTagsLabel,
+                style: const TextStyle(
+                  fontSize: 13,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white38,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DecisionTagSelector(
+                selectedTagIds: _selectedTags,
+                onChanged: (tags) => setState(() => _selectedTags = tags),
               ),
               const SizedBox(height: 24),
               Text(

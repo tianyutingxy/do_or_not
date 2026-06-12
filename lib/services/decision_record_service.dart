@@ -58,11 +58,13 @@ class DecisionRecordService {
     required int id,
     String? decisionContext,
     String? reflection,
+    List<String>? tags,
   }) =>
       _dao.saveNotes(
         id: id,
         decisionContext: decisionContext,
         reflection: reflection,
+        tags: tags,
       );
 
   Future<List<String?>?> pickPhotoForSlot({
