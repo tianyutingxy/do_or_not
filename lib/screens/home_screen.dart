@@ -327,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 32),
                   Text(
                     'DO OR NOT',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
