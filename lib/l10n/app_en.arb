@@ -66,5 +66,35 @@
   "hesitationRarely": ", rarely retries",
   "hesitationAlmostNever": ", usually one-and-done",
   "statsNoRecords": "No records yet—make a choice",
-  "endChoiceToast": "Choice locked in"
+  "endChoiceToast": "Choice locked in",
+  "markDecision": "Mark this decision",
+  "markedDecision": "Marked · worth revisiting",
+  "journalTitle": "Decision journal",
+  "journalEmpty": "No marked decisions yet",
+  "journalEmptyHint": "Star important decisions to find them later",
+  "reflectionPlaceholder": "Write your reflection once you know the outcome…",
+  "reflectionSaved": "Reflection saved",
+  "unmarkDecision": "Remove mark",
+  "journalSummary": "Fate {fate} · {response} · Final {finalChoice}",
+  "@journalSummary": {
+    "placeholders": {
+      "fate": {"type": "String"},
+      "response": {"type": "String"},
+      "finalChoice": {"type": "String"}
+    }
+  },
+  "journalStyleWithRetries": "{style} · Retried {count} time(s)",
+  "@journalStyleWithRetries": {
+    "placeholders": {
+      "style": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "journalFateLabel": "Fate's call",
+  "journalResponseLabel": "Your stance",
+  "journalFinalLabel": "Final choice",
+  "journalStyleLabel": "Reveal style",
+  "journalRetriesLabel": "Retries",
+  "journalReflectionLabel": "Reflection",
+  "journalSaveReflection": "Save reflection"
 }

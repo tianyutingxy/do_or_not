@@ -21,6 +21,8 @@ class CoinRevealAnimation extends StatefulWidget {
     this.choiceLocked = false,
     this.shakingChoice,
     this.confirmedChoice,
+    this.isMarked = false,
+    this.onMarkToggle,
   });
 
   final Decision decision;
@@ -29,6 +31,8 @@ class CoinRevealAnimation extends StatefulWidget {
   final bool choiceLocked;
   final UserResponse? shakingChoice;
   final UserResponse? confirmedChoice;
+  final bool isMarked;
+  final ValueChanged<bool>? onMarkToggle;
 
   @override
   State<CoinRevealAnimation> createState() => _CoinRevealAnimationState();
@@ -293,6 +297,8 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
                     locked: widget.choiceLocked,
                     shaking: widget.shakingChoice,
                     confirmed: widget.confirmedChoice,
+                    isMarked: widget.isMarked,
+                    onMarkToggle: widget.onMarkToggle,
                   ),
                 ),
             ],

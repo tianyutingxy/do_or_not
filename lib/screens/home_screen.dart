@@ -10,12 +10,15 @@ import '../models/animation_style.dart' show RevealStyle;
 import '../models/decision.dart';
 import '../models/user_response.dart';
 import '../models/user_stats.dart';
+import '../services/decision_record_service.dart';
 import '../services/stats_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/card_reveal_animation.dart';
 import '../widgets/coin_reveal_animation.dart';
 import '../widgets/pixel_cat/home_pixel_cat.dart';
 import '../widgets/pixel_cat/pixel_paw_slap.dart';
+import '../widgets/journal_lamp_button.dart';
+import 'journal_screen.dart';
 import 'stats_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +30,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _statsService = StatsService();
+  final _decisionRecordService = DecisionRecordService();
   final _random = Random();
   final _bodyStackKey = GlobalKey();
   final _catKey = GlobalKey<HomePixelCatState>();
@@ -46,6 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isConfirming = false;
   UserResponse? _confirmingResponse;
   UserResponse? _confirmedResponse;
+  int? _currentRecordId;
+  bool _isMarked = false;
+  bool _hasMarkedRecords = false;
   Rect _patrolBounds = Rect.zero;
 
   @override
@@ -57,9 +64,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _load() async {
     final stats = await _statsService.loadStats();
     final styleName = await _statsService.loadAnimationStyle();
+    final markedCount = await _decisionRecordService.countMarked();
     if (!mounted) return;
     setState(() {
       _stats = stats;
+      _hasMarkedRecords = markedCount > 0;
       if (styleName != null) {
         _style = RevealStyle.values.firstWhere(
           (s) => s.name == styleName,
@@ -67,6 +76,12 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     });
+  }
+
+  Future<void> _refreshJournalBadge() async {
+    final markedCount = await _decisionRecordService.countMarked();
+    if (!mounted) return;
+    setState(() => _hasMarkedRecords = markedCount > 0);
   }
 
   Offset _stackOrigin() {
@@ -84,14 +99,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final origin = _stackOrigin();
     final topLeft = areaBox.localToGlobal(Offset.zero) - origin;
     final next = topLeft & areaBox.size;
-    if (next == _patrolBounds) return;
-    final firstLayout = _patrolBounds == Rect.zero;
-    setState(() => _patrolBounds = next);
-    if (_catKey.currentState != null && !_isDeciding) {
-      if (firstLayout) {
-        _catKey.currentState!.beginHomeSession(_patrolBounds);
-      } else {
-        _catKey.currentState!.updateBounds(_patrolBounds);
+    final patrolChanged = next != _patrolBounds;
+    if (patrolChanged) {
+      final firstLayout = _patrolBounds == Rect.zero;
+      setState(() => _patrolBounds = next);
+      if (_catKey.currentState != null && !_isDeciding) {
+        if (firstLayout) {
+          _catKey.currentState!.beginHomeSession(_patrolBounds);
+        } else {
+          _catKey.currentState!.updateBounds(_patrolBounds);
+        }
       }
     }
   }
@@ -140,6 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _isConfirming = false;
       _confirmingResponse = null;
       _confirmedResponse = null;
+      _currentRecordId = null;
+      _isMarked = false;
     });
   }
 
@@ -169,6 +188,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _isConfirming = false;
           _confirmingResponse = null;
           _confirmedResponse = null;
+          _currentRecordId = null;
+          _isMarked = false;
         });
     }
   }
@@ -193,11 +214,33 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (!mounted) return;
 
+    final objective = _pendingDecision!;
+    final record = await _decisionRecordService.createFromSession(
+      revealStyle: _style,
+      objective: objective,
+      finalDecision: recorded,
+      response: response,
+      retryCount: _sessionRetryCount,
+    );
+    if (!mounted) return;
+
     setState(() {
       _stats = updated;
       _confirmingResponse = null;
       _confirmedResponse = response;
+      _currentRecordId = record.id;
+      _isMarked = false;
     });
+  }
+
+  Future<void> _onMarkToggle(bool marked) async {
+    final id = _currentRecordId;
+    if (id == null) return;
+
+    await _decisionRecordService.setMarked(id, marked);
+    if (!mounted) return;
+    setState(() => _isMarked = marked);
+    await _refreshJournalBadge();
   }
 
   void _exitReveal() {
@@ -209,10 +252,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _isConfirming = false;
       _confirmingResponse = null;
       _confirmedResponse = null;
+      _currentRecordId = null;
+      _isMarked = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _beginCatHomeSession();
+      _refreshJournalBadge();
     });
   }
 
@@ -224,6 +270,17 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _style = style);
   }
 
+  Future<void> _openJournal() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => JournalScreen(service: _decisionRecordService),
+      ),
+    );
+    if (!mounted) return;
+    await _refreshJournalBadge();
+    _beginCatHomeSession();
+  }
+
   Future<void> _openStats() async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -231,6 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (!mounted) return;
+    await _refreshJournalBadge();
     _beginCatHomeSession();
   }
 
@@ -262,7 +320,18 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Spacer(),
+                      JournalLampButton(
+                        isBright: _hasMarkedRecords,
+                        enabled: !_isDeciding && !_pawSlapping,
+                        tooltip: l10n.journalTitle,
+                        onTap: _openJournal,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     'DO OR NOT',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -315,6 +384,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       choiceLocked: _isConfirming,
                       shakingChoice: _confirmingResponse,
                       confirmedChoice: _confirmedResponse,
+                      isMarked: _isMarked,
+                      onMarkToggle: _onMarkToggle,
                     )
                   : CardRevealAnimation(
                       key: ValueKey(_decisionRound),
@@ -324,6 +395,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       choiceLocked: _isConfirming,
                       shakingChoice: _confirmingResponse,
                       confirmedChoice: _confirmedResponse,
+                      isMarked: _isMarked,
+                      onMarkToggle: _onMarkToggle,
                     ),
             ),
           if (_isDeciding && _confirmedResponse != null)
@@ -579,17 +652,20 @@ class _MiniStatsBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white10),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _dot(AppColors.doGreen, '${l10n.choiceComply} ${stats.complyCount}'),
-            _separator,
-            _dot(AppColors.notRed, '${l10n.choiceRebel} ${stats.rebelCount}'),
-            _separator,
-            _dot(AppColors.gold, '${l10n.choiceRetry} ${stats.retryPressCount}'),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
-          ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _dot(AppColors.doGreen, '${l10n.choiceComply} ${stats.complyCount}'),
+              _separator,
+              _dot(AppColors.notRed, '${l10n.choiceRebel} ${stats.rebelCount}'),
+              _separator,
+              _dot(AppColors.gold, '${l10n.choiceRetry} ${stats.retryPressCount}'),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+            ],
+          ),
         ),
       ),
     );

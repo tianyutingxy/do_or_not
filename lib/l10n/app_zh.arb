@@ -66,5 +66,35 @@
   "hesitationRarely": "，很少需要重来",
   "hesitationAlmostNever": "，几乎一次定音",
   "statsNoRecords": "还没有记录，去决定一次吧",
-  "endChoiceToast": "本次选择结束"
+  "endChoiceToast": "本次选择结束",
+  "markDecision": "标记这次决定",
+  "markedDecision": "已标记 · 值得回看",
+  "journalTitle": "决策档案",
+  "journalEmpty": "还没有标记的决定",
+  "journalEmptyHint": "重要选择落定后，点星标记即可找回",
+  "reflectionPlaceholder": "结果揭晓后，写下你的心得…",
+  "reflectionSaved": "心得已保存",
+  "unmarkDecision": "取消标记",
+  "journalSummary": "命运 {fate} · {response} · 最终 {finalChoice}",
+  "@journalSummary": {
+    "placeholders": {
+      "fate": {"type": "String"},
+      "response": {"type": "String"},
+      "finalChoice": {"type": "String"}
+    }
+  },
+  "journalStyleWithRetries": "{style} · 重来 {count} 次",
+  "@journalStyleWithRetries": {
+    "placeholders": {
+      "style": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "journalFateLabel": "命运结果",
+  "journalResponseLabel": "你的态度",
+  "journalFinalLabel": "最终选择",
+  "journalStyleLabel": "展示方式",
+  "journalRetriesLabel": "犹豫轮数",
+  "journalReflectionLabel": "心得",
+  "journalSaveReflection": "保存心得"
 }

@@ -21,6 +21,8 @@ class CardRevealAnimation extends StatefulWidget {
     this.choiceLocked = false,
     this.shakingChoice,
     this.confirmedChoice,
+    this.isMarked = false,
+    this.onMarkToggle,
   });
 
   final Decision decision;
@@ -29,6 +31,8 @@ class CardRevealAnimation extends StatefulWidget {
   final bool choiceLocked;
   final UserResponse? shakingChoice;
   final UserResponse? confirmedChoice;
+  final bool isMarked;
+  final ValueChanged<bool>? onMarkToggle;
 
   @override
   State<CardRevealAnimation> createState() => _CardRevealAnimationState();
@@ -264,6 +268,8 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                     locked: widget.choiceLocked,
                     shaking: widget.shakingChoice,
                     confirmed: widget.confirmedChoice,
+                    isMarked: widget.isMarked,
+                    onMarkToggle: widget.onMarkToggle,
                   ),
                 ),
             ],
