@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/decision.dart';
 import '../models/user_response.dart';
@@ -206,6 +207,7 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
         _resultScale,
       ]),
       builder: (context, _) {
+        final l10n = AppLocalizations.of(context);
         final tossT = _tossAnim.value;
         final landT = _landAnim.value;
         final spotlight = _spotlightAnim.value;
@@ -275,10 +277,11 @@ class _CoinRevealAnimationState extends State<CoinRevealAnimation>
                 RevealResultHeader(
                   decision: widget.decision,
                   opacity: spotlight,
-                  flavorTitle: widget.decision.isDo ? '正面' : '反面',
+                  flavorTitle:
+                      widget.decision.isDo ? l10n.coinHeads : l10n.coinTails,
                   detailLine: widget.decision.isDo
-                      ? '天秤导向了行动'
-                      : '喵喵劝你收手',
+                      ? l10n.coinDoDetail
+                      : l10n.coinNotDetail,
                 ),
               if (_showChoices)
                 Positioned(

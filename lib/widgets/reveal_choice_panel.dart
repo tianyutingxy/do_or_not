@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/user_response.dart';
 import '../theme/app_theme.dart';
@@ -21,6 +22,8 @@ class RevealChoicePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (confirmed != null) {
       return _ConfirmedPanel(response: confirmed!);
     }
@@ -34,24 +37,24 @@ class RevealChoicePanel extends StatelessWidget {
             _buildButton(
               response: UserResponse.comply,
               icon: Icons.check_circle_outline_rounded,
-              title: '遵从',
-              subtitle: '就如此吧',
+              title: l10n.choiceComply,
+              subtitle: l10n.choiceComplySubtitle,
               color: AppColors.doGreen,
             ),
             const SizedBox(height: 8),
             _buildButton(
               response: UserResponse.rebel,
               icon: Icons.bolt_rounded,
-              title: '反抗',
-              subtitle: '我就反着来',
+              title: l10n.choiceRebel,
+              subtitle: l10n.choiceRebelSubtitle,
               color: AppColors.notRed,
             ),
             const SizedBox(height: 8),
             _buildButton(
               response: UserResponse.retry,
               icon: Icons.refresh_rounded,
-              title: '再来一次',
-              subtitle: '我有点犹豫',
+              title: l10n.choiceRetry,
+              subtitle: l10n.choiceRetrySubtitle,
               color: AppColors.gold,
             ),
           ],
@@ -100,10 +103,13 @@ class _ConfirmedPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isComply = response == UserResponse.comply;
     final color = isComply ? AppColors.doGreen : AppColors.notRed;
     final icon = isComply ? Icons.check_circle_rounded : Icons.bolt_rounded;
-    final line = isComply ? '就如此吧 · 已遵从' : '我就反着来 · 已反抗';
+    final line = isComply
+        ? l10n.choiceConfirmedComply
+        : l10n.choiceConfirmedRebel;
 
     return SafeArea(
       child: Padding(

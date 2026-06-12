@@ -37,55 +37,6 @@ class UserStats {
       ? 0
       : totalRetriesBeforeFinal / finalizedCount;
 
-  String get doNotLabel {
-    if (total == 0) return '还没有最终落定';
-    if (doPercent >= 70) return '最终常选择 DO（做）';
-    if (doPercent >= 55) return '略偏向 DO（做）';
-    if (doPercent >= 45) return 'DO 与 NOT 大致均衡';
-    if (doPercent >= 30) return '略偏向 NOT（不做）';
-    return '最终常选择 NOT（不做）';
-  }
-
-  /// 基于遵从 / 反抗 / 犹豫三维度的性格画像
-  String get attitudeLabel {
-    if (finalizedCount == 0) return '';
-
-    final complyRatio = complyCount / finalizedCount;
-    final rebelRatio = rebelCount / finalizedCount;
-    final avg = avgRetriesBeforeFinal;
-
-    final String stance;
-    if (complyRatio >= 0.6) {
-      stance = '听从命运型';
-    } else if (rebelRatio >= 0.6) {
-      stance = '反骨逆袭型';
-    } else if ((complyRatio - rebelRatio).abs() <= 0.15) {
-      stance = '进退自如型';
-    } else if (complyRatio > rebelRatio) {
-      stance = '偏顺从型';
-    } else {
-      stance = '偏叛逆型';
-    }
-
-    final String hesitation;
-    if (avg >= 2.5) {
-      hesitation = '，总要多试几手才肯落定';
-    } else if (avg >= 1.2) {
-      hesitation = '，偶尔会犹豫再三';
-    } else if (avg >= 0.4) {
-      hesitation = '，很少需要重来';
-    } else {
-      hesitation = '，几乎一次定音';
-    }
-
-    return '$stance$hesitation';
-  }
-
-  String get personalityLabel {
-    if (finalizedCount == 0) return '还没有记录，去决定一次吧';
-    return attitudeLabel;
-  }
-
   UserStats recordChoice({
     required Decision decision,
     required UserResponse response,

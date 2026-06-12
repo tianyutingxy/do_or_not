@@ -1,0 +1,70 @@
+{
+  "@@locale": "en",
+  "appTitle": "Do or Not",
+  "homeTagline": "Two choices—fate decides for you",
+  "decideButton": "Go",
+  "decideTap": "TAP",
+  "styleCoinTitle": "Coin",
+  "styleCoinSubtitle": "Heads or tails",
+  "styleCardsTitle": "Cards",
+  "styleCardsSubtitle": "Texas hold'em starting hand",
+  "decisionDoSubtitle": "Do it",
+  "decisionNotSubtitle": "Skip it",
+  "fateHasSpoken": "Fate has spoken",
+  "coinHeads": "Heads",
+  "coinTails": "Tails",
+  "coinDoDetail": "The scales tip toward action",
+  "coinNotDetail": "Kitty says hold back",
+  "cardPocketRockets": "Pocket Rockets",
+  "cardTheHammer": "The Hammer",
+  "cardBestHand": "Best starting hand",
+  "cardWorstHand": "Worst starting hand",
+  "choiceComply": "Comply",
+  "choiceComplySubtitle": "So be it",
+  "choiceRebel": "Rebel",
+  "choiceRebelSubtitle": "I'll do the opposite",
+  "choiceRetry": "Try again",
+  "choiceRetrySubtitle": "I'm hesitating",
+  "choiceConfirmedComply": "So be it · Complied",
+  "choiceConfirmedRebel": "Opposite it is · Rebelled",
+  "statsTitle": "My Stats",
+  "statsAttitudeSection": "Your stance toward fate",
+  "statsFinalChoiceSection": "Final choice: DO / NOT",
+  "statsHesitationSection": "Hesitation & retries",
+  "statsRetriesPerRound": "per finalized round",
+  "statsRetriesPending": "Avg. hesitation shows after you finalize a choice",
+  "statsAvgRetries": "On average, you hit \"Try again\" {rounds} time(s) before each decision",
+  "@statsAvgRetries": {
+    "placeholders": {
+      "rounds": {
+        "type": "String"
+      }
+    }
+  },
+  "statsFinalizedCount": "{count} finalized in total",
+  "@statsFinalizedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsLegend": "DO/NOT = final choice; Comply/Rebel = stance; Try again = hesitation",
+  "statsNoFinalChoice": "No final choice yet",
+  "statsUsuallyDo": "You usually pick DO",
+  "statsLeanDo": "Slightly leaning DO",
+  "statsBalanced": "DO and NOT are balanced",
+  "statsLeanNot": "Slightly leaning NOT",
+  "statsUsuallyNot": "You usually pick NOT",
+  "personalityFateFollower": "Fate-follower",
+  "personalityBornRebel": "Born rebel",
+  "personalityGoWithFlow": "Go-with-the-flow",
+  "personalityMostlyCompliant": "Mostly compliant",
+  "personalityMostlyRebellious": "Mostly rebellious",
+  "hesitationManyRetries": ", needs many tries before committing",
+  "hesitationSometimes": ", sometimes hesitates",
+  "hesitationRarely": ", rarely retries",
+  "hesitationAlmostNever": ", usually one-and-done",
+  "statsNoRecords": "No records yet—make a choice",
+  "endChoiceToast": "Choice locked in"
+}

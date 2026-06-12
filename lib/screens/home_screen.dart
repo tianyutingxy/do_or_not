@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../l10n/reveal_style_l10n.dart';
 import '../models/animation_style.dart' show RevealStyle;
 import '../models/decision.dart';
 import '../models/user_response.dart';
@@ -159,6 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -176,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                   ),
                   const SizedBox(height: 4),
-                  const Text('二选一，命运替你决定', style: TextStyle(color: Colors.white38)),
+                  Text(l10n.homeTagline, style: const TextStyle(color: Colors.white38)),
                   const SizedBox(height: 40),
                   _StyleSelector(
                     current: _style,
@@ -185,6 +189,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Spacer(),
                   _DecideButton(
                     onPressed: _isDeciding ? null : _decide,
+                    label: l10n.decideButton,
+                    tapLabel: l10n.decideTap,
                   ),
                   const SizedBox(height: 24),
                   _MiniStatsBar(stats: _stats, onTap: _openStats),
@@ -249,6 +255,8 @@ class _StyleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Row(
       children: RevealStyle.values.map((style) {
         final selected = style == current;
@@ -286,14 +294,14 @@ class _StyleSelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      style.title,
+                      style.title(l10n),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: selected ? Colors.white : Colors.white54,
                       ),
                     ),
                     Text(
-                      style.subtitle,
+                      style.subtitle(l10n),
                       style: const TextStyle(fontSize: 11, color: Colors.white30),
                     ),
                   ],
@@ -308,9 +316,15 @@ class _StyleSelector extends StatelessWidget {
 }
 
 class _DecideButton extends StatefulWidget {
-  const _DecideButton({required this.onPressed});
+  const _DecideButton({
+    required this.onPressed,
+    required this.label,
+    required this.tapLabel,
+  });
 
   final VoidCallback? onPressed;
+  final String label;
+  final String tapLabel;
 
   @override
   State<_DecideButton> createState() => _DecideButtonState();
@@ -375,20 +389,27 @@ class _DecideButtonState extends State<_DecideButton>
             child: child,
           );
         },
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '去吧',
-                style: TextStyle(
+                widget.label,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 4),
-              Text('TAP', style: TextStyle(fontSize: 12, color: Colors.white38, letterSpacing: 4)),
+              const SizedBox(height: 4),
+              Text(
+                widget.tapLabel,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.white38,
+                  letterSpacing: 4,
+                ),
+              ),
             ],
           ),
         ),

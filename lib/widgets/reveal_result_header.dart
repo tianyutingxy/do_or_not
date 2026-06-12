@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/decision.dart';
 import '../theme/app_theme.dart';
@@ -20,6 +21,7 @@ class RevealResultHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final t = opacity.clamp(0.0, 1.0);
     if (t <= 0) return const SizedBox.shrink();
 
@@ -50,7 +52,7 @@ class RevealResultHeader extends StatelessWidget {
                 const SizedBox(height: 10),
               ],
               Text(
-                '命运给出了',
+                l10n.fateHasSpoken,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,

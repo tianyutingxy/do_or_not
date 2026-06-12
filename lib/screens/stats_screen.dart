@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../l10n/user_stats_l10n.dart';
 import '../models/user_stats.dart';
 import '../theme/app_theme.dart';
 
@@ -10,6 +12,7 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final doPct = stats.doPercent;
     final notPct = 100 - doPct;
     final complyPct = stats.complyPercent;
@@ -18,7 +21,7 @@ class StatsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('我的统计'),
+        title: Text(l10n.statsTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -28,14 +31,14 @@ class StatsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              stats.personalityLabel,
+              stats.personalityLabel(l10n),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontSize: 22,
                   ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
-            const _SectionTitle('面对命运的态度'),
+            _SectionTitle(l10n.statsAttitudeSection),
             const SizedBox(height: 12),
             _RatioBar(
               leftPercent: complyPct,
@@ -47,8 +50,8 @@ class StatsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _StatCard(
-                    label: '遵从',
-                    subtitle: '就如此吧',
+                    label: l10n.choiceComply,
+                    subtitle: l10n.choiceComplySubtitle,
                     count: stats.complyCount,
                     percent: complyPct,
                     color: AppColors.doGreen,
@@ -57,8 +60,8 @@ class StatsScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatCard(
-                    label: '反抗',
-                    subtitle: '我就反着来',
+                    label: l10n.choiceRebel,
+                    subtitle: l10n.choiceRebelSubtitle,
                     count: stats.rebelCount,
                     percent: rebelPct,
                     color: AppColors.notRed,
@@ -67,7 +70,7 @@ class StatsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 28),
-            const _SectionTitle('最终选择 DO / NOT'),
+            _SectionTitle(l10n.statsFinalChoiceSection),
             const SizedBox(height: 12),
             _RatioBar(
               leftPercent: doPct,
@@ -80,7 +83,7 @@ class StatsScreen extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     label: 'DO',
-                    subtitle: '做',
+                    subtitle: l10n.decisionDoSubtitle,
                     count: stats.doCount,
                     percent: doPct,
                     color: AppColors.doGreen,
@@ -90,7 +93,7 @@ class StatsScreen extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     label: 'NOT',
-                    subtitle: '不做',
+                    subtitle: l10n.decisionNotSubtitle,
                     count: stats.notCount,
                     percent: notPct,
                     color: AppColors.notRed,
@@ -101,17 +104,17 @@ class StatsScreen extends StatelessWidget {
             if (stats.finalizedCount > 0) ...[
               const SizedBox(height: 10),
               Text(
-                stats.doNotLabel,
+                stats.doNotLabel(l10n),
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
             ],
             const SizedBox(height: 28),
-            const _SectionTitle('犹豫与重来'),
+            _SectionTitle(l10n.statsHesitationSection),
             const SizedBox(height: 12),
             _StatCard(
-              label: '再来一次',
-              subtitle: '我有点犹豫',
+              label: l10n.choiceRetry,
+              subtitle: l10n.choiceRetrySubtitle,
               count: stats.retryPressCount,
               percent: null,
               color: AppColors.gold,
@@ -137,16 +140,15 @@ class StatsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '次 / 每轮落定',
-                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                  Text(
+                    l10n.statsRetriesPerRound,
+                    style: const TextStyle(color: Colors.white54, fontSize: 13),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     stats.finalizedCount == 0
-                        ? '落定后才会计算平均犹豫轮数'
-                        : '平均每次做决定前，你会「再来一次」'
-                        '${avgRetry.toStringAsFixed(1)} 轮',
+                        ? l10n.statsRetriesPending
+                        : l10n.statsAvgRetries(avgRetry.toStringAsFixed(1)),
                     style: const TextStyle(
                       color: Colors.white38,
                       fontSize: 12,
@@ -158,13 +160,13 @@ class StatsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              '共落定 ${stats.finalizedCount} 次',
+              l10n.statsFinalizedCount(stats.finalizedCount),
               style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
-              'DO/NOT 记最终选择；遵从/反抗记态度；再来一次记犹豫',
+              l10n.statsLegend,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),

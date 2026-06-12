@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/decision.dart';
 import '../models/user_response.dart';
@@ -170,6 +171,7 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
         _resultController,
       ]),
       builder: (context, _) {
+        final l10n = AppLocalizations.of(context);
         final deal1 = _dealCard1Controller.value;
         final deal2 = _dealCard2Controller.value;
         final flipT = _flipController.value;
@@ -247,9 +249,9 @@ class _CardRevealAnimationState extends State<CardRevealAnimation>
                   decision: widget.decision,
                   opacity: spotlight,
                   flavorTitle: widget.decision.isDo
-                      ? 'Pocket Rockets'
-                      : 'The Hammer',
-                  detailLine: _hand.handLabel,
+                      ? l10n.cardPocketRockets
+                      : l10n.cardTheHammer,
+                  detailLine: _hand.handLabel(l10n),
                 ),
 
               if (_showChoices)
@@ -401,14 +403,18 @@ class _HandCards {
     required this.card1Suit,
     required this.card2Rank,
     required this.card2Suit,
-    required this.handLabel,
+    required this.isBestHand,
   });
 
   final String card1Rank;
   final Suit card1Suit;
   final String card2Rank;
   final Suit card2Suit;
-  final String handLabel;
+  final bool isBestHand;
+
+  String handLabel(AppLocalizations l10n) {
+    return isBestHand ? l10n.cardBestHand : l10n.cardWorstHand;
+  }
 
   static final _rng = math.Random();
 
@@ -422,7 +428,7 @@ class _HandCards {
         card1Suit: s1,
         card2Rank: 'A',
         card2Suit: s2,
-        handLabel: '最强起手牌',
+        isBestHand: true,
       );
     }
 
@@ -445,7 +451,7 @@ class _HandCards {
       card1Suit: suit1,
       card2Rank: rank2,
       card2Suit: suit2,
-      handLabel: '最烂起手牌',
+      isBestHand: false,
     );
   }
 }

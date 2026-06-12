@@ -1,0 +1,70 @@
+{
+  "@@locale": "zh",
+  "appTitle": "Do or Not",
+  "homeTagline": "二选一，命运替你决定",
+  "decideButton": "去吧",
+  "decideTap": "TAP",
+  "styleCoinTitle": "硬币",
+  "styleCoinSubtitle": "正反抛掷",
+  "styleCardsTitle": "纸牌",
+  "styleCardsSubtitle": "德州起手牌",
+  "decisionDoSubtitle": "做",
+  "decisionNotSubtitle": "不做",
+  "fateHasSpoken": "命运给出了",
+  "coinHeads": "正面",
+  "coinTails": "反面",
+  "coinDoDetail": "天秤导向了行动",
+  "coinNotDetail": "喵喵劝你收手",
+  "cardPocketRockets": "口袋火箭",
+  "cardTheHammer": "铁锤七二",
+  "cardBestHand": "最强起手牌",
+  "cardWorstHand": "最烂起手牌",
+  "choiceComply": "遵从",
+  "choiceComplySubtitle": "就如此吧",
+  "choiceRebel": "反抗",
+  "choiceRebelSubtitle": "我就反着来",
+  "choiceRetry": "再来一次",
+  "choiceRetrySubtitle": "我有点犹豫",
+  "choiceConfirmedComply": "就如此吧 · 已遵从",
+  "choiceConfirmedRebel": "我就反着来 · 已反抗",
+  "statsTitle": "我的统计",
+  "statsAttitudeSection": "面对命运的态度",
+  "statsFinalChoiceSection": "最终选择 DO / NOT",
+  "statsHesitationSection": "犹豫与重来",
+  "statsRetriesPerRound": "次 / 每轮落定",
+  "statsRetriesPending": "落定后才会计算平均犹豫轮数",
+  "statsAvgRetries": "平均每次做决定前，你会「再来一次」{rounds} 轮",
+  "@statsAvgRetries": {
+    "placeholders": {
+      "rounds": {
+        "type": "String"
+      }
+    }
+  },
+  "statsFinalizedCount": "共落定 {count} 次",
+  "@statsFinalizedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsLegend": "DO/NOT 记最终选择；遵从/反抗记态度；再来一次记犹豫",
+  "statsNoFinalChoice": "还没有最终落定",
+  "statsUsuallyDo": "最终常选择 DO（做）",
+  "statsLeanDo": "略偏向 DO（做）",
+  "statsBalanced": "DO 与 NOT 大致均衡",
+  "statsLeanNot": "略偏向 NOT（不做）",
+  "statsUsuallyNot": "最终常选择 NOT（不做）",
+  "personalityFateFollower": "听从命运型",
+  "personalityBornRebel": "反骨逆袭型",
+  "personalityGoWithFlow": "进退自如型",
+  "personalityMostlyCompliant": "偏顺从型",
+  "personalityMostlyRebellious": "偏叛逆型",
+  "hesitationManyRetries": "，总要多试几手才肯落定",
+  "hesitationSometimes": "，偶尔会犹豫再三",
+  "hesitationRarely": "，很少需要重来",
+  "hesitationAlmostNever": "，几乎一次定音",
+  "statsNoRecords": "还没有记录，去决定一次吧",
+  "endChoiceToast": "本次选择结束"
+}
