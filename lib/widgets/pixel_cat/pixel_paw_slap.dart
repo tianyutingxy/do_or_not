@@ -3,67 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../theme/app_theme.dart';
 
-/// 程序生成的像素猫爪印：四趾弧形 + 下方掌垫，单色剪影。
-class PixelPawPainter extends CustomPainter {
-  PixelPawPainter({required this.opacity});
-
-  final double opacity;
-
-  static const _fill = AppColors.gold;
-
-  static const _width = 24;
-  static const _grid = <String>[
-    '........................',
-    '.......xxx....xxx.......',
-    '.......xxx....xxx.......',
-    '..xxxx.xxx....xxx.xxxx..',
-    '..xxxx.xxx....xxx.xxxx..',
-    '..xxxx.xxx....xxx.xxxx..',
-    '..xxxx............xxxx..',
-    '........................',
-    '........................',
-    '........................',
-    '........................',
-    '........................',
-    '.........xxxxxx.........',
-    '.......xxxxxxxxxx.......',
-    '......xxxxxxxxxxxx......',
-    '.....xxxxxxxxxxxxxx.....',
-    '.....xxxxxxxxxxxxxx.....',
-    '.....xxxxxxxxxxxxxx.....',
-    '.....xxxxxxxxxxxxxx.....',
-    '......xxxxxxxxxxxx......',
-    '.......xxxxxxxxxx.......',
-    '.........xxxxxx.........',
-    '........................',
-  ];
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const pixel = 3.0;
-    final paint = Paint()..color = _fill.withValues(alpha: opacity);
-    final ox = (size.width - _width * pixel) / 2;
-    final oy = (size.height - _grid.length * pixel) / 2;
-
-    for (var y = 0; y < _grid.length; y++) {
-      final row = _grid[y];
-      for (var x = 0; x < row.length; x++) {
-        if (row[x] != 'x') continue;
-        canvas.drawRect(
-          Rect.fromLTWH(ox + x * pixel, oy + y * pixel, pixel, pixel),
-          paint,
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant PixelPawPainter oldDelegate) {
-    return oldDelegate.opacity != opacity;
-  }
-}
-
-/// 猫爪从上方拍下：落下 → 压扁卡片 → 短暂停留。
+/// 猫爪从上方拍下，落在选项卡片右下角。
 class PixelPawSlapOverlay extends StatefulWidget {
   const PixelPawSlapOverlay({
     super.key,
@@ -81,12 +21,16 @@ class _PixelPawSlapOverlayState extends State<PixelPawSlapOverlay>
   late final AnimationController _controller;
   bool _impactHapticSent = false;
 
+  static const _pawEmoji = '🐾';
+  static const _pawSize = 56.0;
+  static const _slant = -0.42;
+
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 520),
+      duration: const Duration(milliseconds: 480),
     )..forward();
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
@@ -98,7 +42,7 @@ class _PixelPawSlapOverlayState extends State<PixelPawSlapOverlay>
 
   void _onTick() {
     if (_impactHapticSent) return;
-    if (_controller.value >= 0.38) {
+    if (_controller.value >= 0.36) {
       _impactHapticSent = true;
       HapticFeedback.lightImpact();
     }
@@ -117,14 +61,14 @@ class _PixelPawSlapOverlayState extends State<PixelPawSlapOverlay>
       animation: _controller,
       builder: (context, _) {
         final t = _controller.value;
-        final drop = t < 0.42
-            ? Curves.easeIn.transform(t / 0.42)
+        final drop = t < 0.40
+            ? Curves.easeIn.transform(t / 0.40)
             : 1.0;
-        final pawY = -24 * (1 - drop);
+        final pawY = -28 * (1 - drop);
         final opacity = t < 0.08 ? t / 0.08 : 1.0;
 
-        final flash = t > 0.36 && t < 0.50
-            ? (1 - ((t - 0.36) / 0.14).abs()) * 0.25
+        final flash = t > 0.34 && t < 0.48
+            ? (1 - ((t - 0.34) / 0.14).abs()) * 0.18
             : 0.0;
 
         return Stack(
@@ -140,13 +84,33 @@ class _PixelPawSlapOverlayState extends State<PixelPawSlapOverlay>
                   ),
                 ),
               ),
-            Positioned.fill(
-              child: Transform.translate(
-                offset: Offset(0, pawY),
-                child: Center(
-                  child: CustomPaint(
-                    size: const Size(72, 69),
-                    painter: PixelPawPainter(opacity: opacity),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6, bottom: 0),
+                child: Transform.translate(
+                  offset: Offset(2, pawY),
+                  child: Transform.rotate(
+                    angle: _slant,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [
+                            AppColors.gold,
+                            AppColors.gold,
+                          ],
+                        ).createShader(bounds),
+                        child: Text(
+                          _pawEmoji,
+                          style: const TextStyle(
+                            fontSize: _pawSize,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
