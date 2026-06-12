@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,8 @@ import '../services/stats_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/card_reveal_animation.dart';
 import '../widgets/coin_reveal_animation.dart';
+import '../widgets/pixel_cat/home_pixel_cat.dart';
+import '../widgets/pixel_cat/pixel_paw_slap.dart';
 import 'stats_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,16 +28,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _statsService = StatsService();
   final _random = Random();
+  final _bodyStackKey = GlobalKey();
+  final _catKey = GlobalKey<HomePixelCatState>();
+  final _coinStyleKey = GlobalKey();
+  final _cardsStyleKey = GlobalKey();
+  final _patrolAreaKey = GlobalKey();
 
   UserStats _stats = const UserStats();
   RevealStyle _style = RevealStyle.coin;
   bool _isDeciding = false;
+  bool _pawSlapping = false;
+  Rect? _pawTargetRect;
+  final _pawSlapCompleter = _AsyncGate();
   Decision? _pendingDecision;
   int _decisionRound = 0;
   int _sessionRetryCount = 0;
   bool _isConfirming = false;
   UserResponse? _confirmingResponse;
   UserResponse? _confirmedResponse;
+  Rect _patrolBounds = Rect.zero;
 
   @override
   void initState() {
@@ -57,13 +69,70 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Offset _stackOrigin() {
+    final stackBox =
+        _bodyStackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (stackBox == null || !stackBox.hasSize) return Offset.zero;
+    return stackBox.localToGlobal(Offset.zero);
+  }
+
+  void _updatePatrolBounds() {
+    final areaBox =
+        _patrolAreaKey.currentContext?.findRenderObject() as RenderBox?;
+    if (areaBox == null || !areaBox.hasSize) return;
+
+    final origin = _stackOrigin();
+    final topLeft = areaBox.localToGlobal(Offset.zero) - origin;
+    final next = topLeft & areaBox.size;
+    if (next == _patrolBounds) return;
+    final firstLayout = _patrolBounds == Rect.zero;
+    setState(() => _patrolBounds = next);
+    if (_catKey.currentState != null && !_isDeciding) {
+      if (firstLayout) {
+        _catKey.currentState!.beginHomeSession(_patrolBounds);
+      } else {
+        _catKey.currentState!.updateBounds(_patrolBounds);
+      }
+    }
+  }
+
+  void _beginCatHomeSession() {
+    if (_patrolBounds == Rect.zero) return;
+    _catKey.currentState?.beginHomeSession(_patrolBounds);
+  }
+
+  Rect? _selectedStyleRectInStack() {
+    final key = _style == RevealStyle.coin ? _coinStyleKey : _cardsStyleKey;
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    final origin = _stackOrigin();
+    final topLeft = box.localToGlobal(Offset.zero) - origin;
+    return topLeft & box.size;
+  }
+
   Future<void> _decide() async {
-    if (_isDeciding) return;
+    if (_isDeciding || _pawSlapping) return;
 
+    _catKey.currentState?.freeze();
     HapticFeedback.mediumImpact();
-    final decision = _random.nextBool() ? Decision.doIt : Decision.notIt;
 
+    final pawRect = _selectedStyleRectInStack();
+    if (pawRect != null) {
+      setState(() {
+        _pawSlapping = true;
+        _pawTargetRect = pawRect;
+      });
+      await _pawSlapCompleter.wait();
+    } else {
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+    }
+
+    if (!mounted) return;
+
+    final decision = _random.nextBool() ? Decision.doIt : Decision.notIt;
     setState(() {
+      _pawSlapping = false;
+      _pawTargetRect = null;
       _isDeciding = true;
       _pendingDecision = decision;
       _decisionRound++;
@@ -141,6 +210,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _confirmingResponse = null;
       _confirmedResponse = null;
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _beginCatHomeSession();
+    });
   }
 
   Future<void> _switchStyle(RevealStyle style) async {
@@ -151,21 +224,39 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _style = style);
   }
 
-  void _openStats() {
-    Navigator.of(context).push(
+  Future<void> _openStats() async {
+    await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => StatsScreen(stats: _stats),
       ),
     );
+    if (!mounted) return;
+    _beginCatHomeSession();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updatePatrolBounds());
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final showCat = !_isDeciding;
 
     return Scaffold(
       body: Stack(
+        key: _bodyStackKey,
+        clipBehavior: Clip.none,
         children: [
+          if (_patrolBounds != Rect.zero)
+            HomePixelCat(
+              key: _catKey,
+              patrolBounds: _patrolBounds,
+              visible: showCat || _pawSlapping,
+              frozen: _pawSlapping,
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -184,11 +275,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 40),
                   _StyleSelector(
                     current: _style,
-                    onChanged: _isDeciding ? null : _switchStyle,
+                    onChanged: _isDeciding || _pawSlapping ? null : _switchStyle,
+                    coinKey: _coinStyleKey,
+                    cardsKey: _cardsStyleKey,
+                    dimUnselected: _pawSlapping,
                   ),
-                  const Spacer(),
+                  Expanded(
+                    key: _patrolAreaKey,
+                    child: const SizedBox.expand(),
+                  ),
                   _DecideButton(
-                    onPressed: _isDeciding ? null : _decide,
+                    onPressed: _isDeciding || _pawSlapping ? null : _decide,
                     label: l10n.decideButton,
                     tapLabel: l10n.decideTap,
                   ),
@@ -199,6 +296,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          if (_pawSlapping && _pawTargetRect != null)
+            Positioned.fromRect(
+              rect: _pawTargetRect!,
+              child: PixelPawSlapOverlay(
+                key: ValueKey('paw_${_style.name}_$_decisionRound'),
+                onComplete: _pawSlapCompleter.complete,
+              ),
+            ),
           if (_isDeciding && _pendingDecision != null)
             Positioned.fill(
               child: _style == RevealStyle.coin
@@ -247,11 +352,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _AsyncGate {
+  Completer<void>? _completer;
+
+  Future<void> wait() {
+    _completer = Completer<void>();
+    return _completer!.future;
+  }
+
+  void complete() {
+    if (_completer != null && !_completer!.isCompleted) {
+      _completer!.complete();
+    }
+    _completer = null;
+  }
+}
+
 class _StyleSelector extends StatelessWidget {
-  const _StyleSelector({required this.current, required this.onChanged});
+  const _StyleSelector({
+    required this.current,
+    required this.onChanged,
+    required this.coinKey,
+    required this.cardsKey,
+    this.dimUnselected = false,
+  });
 
   final RevealStyle current;
   final void Function(RevealStyle)? onChanged;
+  final GlobalKey coinKey;
+  final GlobalKey cardsKey;
+  final bool dimUnselected;
 
   @override
   Widget build(BuildContext context) {
@@ -260,51 +390,63 @@ class _StyleSelector extends StatelessWidget {
     return Row(
       children: RevealStyle.values.map((style) {
         final selected = style == current;
+        final tileKey =
+            style == RevealStyle.coin ? coinKey : cardsKey;
+        final dimmed = dimUnselected && !selected;
         return Expanded(
           child: Padding(
+            key: tileKey,
             padding: EdgeInsets.only(
               right: style == RevealStyle.coin ? 8 : 0,
               left: style == RevealStyle.cards ? 8 : 0,
             ),
             child: GestureDetector(
               onTap: onChanged == null ? null : () => onChanged!(style),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.gold.withValues(alpha: 0.12)
-                      : AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: dimmed ? 0.35 : 1,
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 120),
+                  scale: dimUnselected && selected ? 0.94 : 1,
+                  child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
                     color: selected
-                        ? AppColors.gold.withValues(alpha: 0.6)
-                        : Colors.white12,
-                    width: selected ? 1.5 : 1,
+                        ? AppColors.gold.withValues(alpha: 0.12)
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.gold.withValues(alpha: 0.6)
+                          : Colors.white12,
+                      width: selected ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        style == RevealStyle.coin
+                            ? Icons.toll_rounded
+                            : Icons.style_rounded,
+                        color: selected ? AppColors.gold : Colors.white38,
+                        size: 28,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        style.title(l10n),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: selected ? Colors.white : Colors.white54,
+                        ),
+                      ),
+                      Text(
+                        style.subtitle(l10n),
+                        style: const TextStyle(fontSize: 11, color: Colors.white30),
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  children: [
-                    Icon(
-                      style == RevealStyle.coin
-                          ? Icons.toll_rounded
-                          : Icons.style_rounded,
-                      color: selected ? AppColors.gold : Colors.white38,
-                      size: 28,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      style.title(l10n),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: selected ? Colors.white : Colors.white54,
-                      ),
-                    ),
-                    Text(
-                      style.subtitle(l10n),
-                      style: const TextStyle(fontSize: 11, color: Colors.white30),
-                    ),
-                  ],
                 ),
               ),
             ),
