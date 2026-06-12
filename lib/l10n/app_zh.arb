@@ -121,5 +121,10 @@
   "journalDelete": "删除",
   "journalDeleteConfirmTitle": "确认删除？",
   "journalDeleteConfirmBody": "删除后无法恢复，确定要删除这条记录吗？",
-  "journalDemoBadge": "示例"
+  "journalDemoBadge": "示例",
+  "aboutVersionLabel": "版本",
+  "aboutAuthorQuote": "人生大大小小的决定，一半是冥冥中的定数，一半是自己拍的板。反正选都选了，后悔也不退款，喵两声继续往前走就好，(=^･ω･^) 丿",
+  "aboutContactLabel": "联系方式",
+  "aboutContactCopied": "邮箱已复制",
+  "aboutGotIt": "知道了"
 }

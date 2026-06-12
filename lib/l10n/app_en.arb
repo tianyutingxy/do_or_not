@@ -121,5 +121,10 @@
   "journalDelete": "Delete",
   "journalDeleteConfirmTitle": "Delete this record?",
   "journalDeleteConfirmBody": "This cannot be undone. Delete this entry?",
-  "journalDemoBadge": "Demo"
+  "journalDemoBadge": "Demo",
+  "aboutVersionLabel": "Version",
+  "aboutAuthorQuote": "Big or small, every choice is half fate and half your call. Once it's made, no refunds—just meow twice and keep walking. (=^･ω･^) 丿",
+  "aboutContactLabel": "Contact",
+  "aboutContactCopied": "Email copied",
+  "aboutGotIt": "Got it"
 }

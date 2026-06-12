@@ -18,6 +18,7 @@ import '../widgets/coin_reveal_animation.dart';
 import '../widgets/pixel_cat/home_pixel_cat.dart';
 import '../widgets/pixel_cat/pixel_paw_slap.dart';
 import '../widgets/journal_door_button.dart';
+import '../widgets/about_author_card.dart';
 import 'journal_screen.dart';
 import 'stats_screen.dart';
 
@@ -82,6 +83,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final markedCount = await _decisionRecordService.countPendingReview();
     if (!mounted) return;
     setState(() => _hasMarkedRecords = markedCount > 0);
+  }
+
+  void _showAboutAuthor() {
+    HapticFeedback.lightImpact();
+    showAboutAuthorCard(context);
   }
 
   Offset _stackOrigin() {
@@ -314,6 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
               patrolBounds: _patrolBounds,
               visible: showCat || _pawSlapping,
               frozen: _pawSlapping,
+              onDoubleTap: _isDeciding || _pawSlapping ? null : _showAboutAuthor,
             ),
           SafeArea(
             child: Padding(

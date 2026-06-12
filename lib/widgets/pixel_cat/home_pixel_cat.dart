@@ -15,11 +15,13 @@ class HomePixelCat extends StatefulWidget {
     required this.patrolBounds,
     required this.visible,
     this.frozen = false,
+    this.onDoubleTap,
   });
 
   final Rect patrolBounds;
   final bool visible;
   final bool frozen;
+  final VoidCallback? onDoubleTap;
 
   @override
   State<HomePixelCat> createState() => HomePixelCatState();
@@ -373,7 +375,9 @@ class HomePixelCatState extends State<HomePixelCat>
     return Positioned(
       left: displayPos.dx - size.width / 2,
       top: displayPos.dy - size.height,
-      child: IgnorePointer(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onDoubleTap: widget.onDoubleTap,
         child: RepaintBoundary(
           child: CatSpriteWidget(
             action: _action,
