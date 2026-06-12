@@ -73,7 +73,7 @@ class _SimpleDoorPainter extends CustomPainter {
 
     final borderColor = isOpen
         ? AppColors.gold.withValues(alpha: 0.88)
-        : Colors.white.withValues(alpha: enabled ? 0.34 : 0.16);
+        : AppColors.gold.withValues(alpha: enabled ? 0.78 : 0.38);
 
     if (isOpen) {
       final glowCenter = Offset(frame.center.dx, frame.bottom - frame.height * 0.18);
@@ -120,8 +120,11 @@ class _SimpleDoorPainter extends CustomPainter {
         ..color = borderColor,
     );
 
-    final knobCenter = Offset(frame.right - 9, frame.center.dy);
-    if (isOpen) {
+    _drawKnob(canvas, Offset(frame.right - 9, frame.center.dy), lit: isOpen);
+  }
+
+  void _drawKnob(Canvas canvas, Offset knobCenter, {required bool lit}) {
+    if (lit) {
       canvas.drawCircle(
         knobCenter,
         6,
@@ -129,20 +132,21 @@ class _SimpleDoorPainter extends CustomPainter {
           ..color = AppColors.gold.withValues(alpha: 0.28)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
-      canvas.drawCircle(
-        knobCenter,
-        2.6,
-        Paint()..color = const Color(0xFFFFF2CC),
-      );
-      canvas.drawCircle(
-        knobCenter,
-        2.6,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 0.8
-          ..color = AppColors.gold.withValues(alpha: 0.9),
-      );
     }
+
+    canvas.drawCircle(
+      knobCenter,
+      2.6,
+      Paint()..color = lit ? const Color(0xFFFFF2CC) : AppColors.gold,
+    );
+    canvas.drawCircle(
+      knobCenter,
+      2.6,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = AppColors.gold.withValues(alpha: lit ? 0.9 : 0.85),
+    );
   }
 
   @override
@@ -150,3 +154,4 @@ class _SimpleDoorPainter extends CustomPainter {
     return oldDelegate.isOpen != isOpen || oldDelegate.enabled != enabled;
   }
 }
+

@@ -104,7 +104,10 @@ class DecisionRecordService {
 
   Future<DecisionRecord?> findById(int id) => _dao.findById(id);
 
-  Future<int> countPendingReview() => _dao.countPendingReview();
+  Future<int> countPendingReview() async {
+    await _demoSeeder.ensureSeeded();
+    return _dao.countPendingReview();
+  }
 
   Future<void> deleteRecord(int id) async {
     final record = await findById(id);
