@@ -15,6 +15,7 @@ import '../services/stats_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/card_reveal_animation.dart';
 import '../widgets/coin_reveal_animation.dart';
+import '../widgets/dice_reveal_animation.dart';
 import '../widgets/pixel_cat/home_pixel_cat.dart';
 import '../widgets/pixel_cat/pixel_paw_slap.dart';
 import '../widgets/journal_door_button.dart';
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _catKey = GlobalKey<HomePixelCatState>();
   final _coinStyleKey = GlobalKey();
   final _cardsStyleKey = GlobalKey();
+  final _diceStyleKey = GlobalKey();
   final _patrolAreaKey = GlobalKey();
 
   UserStats _stats = const UserStats();
@@ -125,7 +127,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Rect? _selectedStyleRectInStack() {
-    final key = _style == RevealStyle.coin ? _coinStyleKey : _cardsStyleKey;
+    final key = switch (_style) {
+      RevealStyle.coin => _coinStyleKey,
+      RevealStyle.cards => _cardsStyleKey,
+      RevealStyle.dice => _diceStyleKey,
+    };
     final box = key.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return null;
     final origin = _stackOrigin();
@@ -343,6 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onChanged: _isDeciding || _pawSlapping ? null : _switchStyle,
                     coinKey: _coinStyleKey,
                     cardsKey: _cardsStyleKey,
+                    diceKey: _diceStyleKey,
                     dimUnselected: _pawSlapping,
                   ),
                   Expanded(
@@ -391,29 +398,41 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           if (_isDeciding && _pendingDecision != null)
             Positioned.fill(
-              child: _style == RevealStyle.coin
-                  ? CoinRevealAnimation(
-                      key: ValueKey(_decisionRound),
-                      decision: _pendingDecision!,
-                      onRevealed: _onRevealed,
-                      onChoice: _onChoice,
-                      choiceLocked: _isConfirming,
-                      shakingChoice: _confirmingResponse,
-                      confirmedChoice: _confirmedResponse,
-                      isMarked: _isMarked,
-                      onMarkToggle: _onMarkToggle,
-                    )
-                  : CardRevealAnimation(
-                      key: ValueKey(_decisionRound),
-                      decision: _pendingDecision!,
-                      onRevealed: _onRevealed,
-                      onChoice: _onChoice,
-                      choiceLocked: _isConfirming,
-                      shakingChoice: _confirmingResponse,
-                      confirmedChoice: _confirmedResponse,
-                      isMarked: _isMarked,
-                      onMarkToggle: _onMarkToggle,
-                    ),
+              child: switch (_style) {
+                RevealStyle.coin => CoinRevealAnimation(
+                    key: ValueKey(_decisionRound),
+                    decision: _pendingDecision!,
+                    onRevealed: _onRevealed,
+                    onChoice: _onChoice,
+                    choiceLocked: _isConfirming,
+                    shakingChoice: _confirmingResponse,
+                    confirmedChoice: _confirmedResponse,
+                    isMarked: _isMarked,
+                    onMarkToggle: _onMarkToggle,
+                  ),
+                RevealStyle.cards => CardRevealAnimation(
+                    key: ValueKey(_decisionRound),
+                    decision: _pendingDecision!,
+                    onRevealed: _onRevealed,
+                    onChoice: _onChoice,
+                    choiceLocked: _isConfirming,
+                    shakingChoice: _confirmingResponse,
+                    confirmedChoice: _confirmedResponse,
+                    isMarked: _isMarked,
+                    onMarkToggle: _onMarkToggle,
+                  ),
+                RevealStyle.dice => DiceRevealAnimation(
+                    key: ValueKey(_decisionRound),
+                    decision: _pendingDecision!,
+                    onRevealed: _onRevealed,
+                    onChoice: _onChoice,
+                    choiceLocked: _isConfirming,
+                    shakingChoice: _confirmingResponse,
+                    confirmedChoice: _confirmedResponse,
+                    isMarked: _isMarked,
+                    onMarkToggle: _onMarkToggle,
+                  ),
+              },
             ),
           if (_isDeciding && _confirmedResponse != null)
             Positioned(
@@ -463,6 +482,7 @@ class _StyleSelector extends StatelessWidget {
     required this.onChanged,
     required this.coinKey,
     required this.cardsKey,
+    required this.diceKey,
     this.dimUnselected = false,
   });
 
@@ -470,78 +490,106 @@ class _StyleSelector extends StatelessWidget {
   final void Function(RevealStyle)? onChanged;
   final GlobalKey coinKey;
   final GlobalKey cardsKey;
+  final GlobalKey diceKey;
   final bool dimUnselected;
+
+  GlobalKey _keyFor(RevealStyle style) => switch (style) {
+    RevealStyle.coin => coinKey,
+    RevealStyle.cards => cardsKey,
+    RevealStyle.dice => diceKey,
+  };
+
+  IconData _iconFor(RevealStyle style) => switch (style) {
+    RevealStyle.coin => Icons.toll_rounded,
+    RevealStyle.cards => Icons.style_rounded,
+    RevealStyle.dice => Icons.casino_rounded,
+  };
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final styles = RevealStyle.values;
+    const gap = 8.0;
 
-    return Row(
-      children: RevealStyle.values.map((style) {
-        final selected = style == current;
-        final tileKey =
-            style == RevealStyle.coin ? coinKey : cardsKey;
-        final dimmed = dimUnselected && !selected;
-        return Expanded(
-          child: Padding(
-            key: tileKey,
-            padding: EdgeInsets.only(
-              right: style == RevealStyle.coin ? 8 : 0,
-              left: style == RevealStyle.cards ? 8 : 0,
-            ),
-            child: GestureDetector(
-              onTap: onChanged == null ? null : () => onChanged!(style),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 180),
-                opacity: dimmed ? 0.35 : 1,
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 120),
-                  scale: dimUnselected && selected ? 0.94 : 1,
-                  child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.gold.withValues(alpha: 0.12)
-                        : AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.gold.withValues(alpha: 0.6)
-                          : Colors.white12,
-                      width: selected ? 1.5 : 1,
-                    ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 显示 2 个完整卡片 + 1/3 骰子入口，暗示可横向滑动
+        final tileWidth = (constraints.maxWidth - gap * 2) * 3 / 7;
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              for (int i = 0; i < styles.length; i++)
+                Padding(
+                  key: _keyFor(styles[i]),
+                  padding: EdgeInsets.only(
+                    right: i < styles.length - 1 ? gap : 0,
                   ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        style == RevealStyle.coin
-                            ? Icons.toll_rounded
-                            : Icons.style_rounded,
-                        color: selected ? AppColors.gold : Colors.white38,
-                        size: 28,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        style.title(l10n),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: selected ? Colors.white : Colors.white54,
-                        ),
-                      ),
-                      Text(
-                        style.subtitle(l10n),
-                        style: const TextStyle(fontSize: 11, color: Colors.white30),
-                      ),
-                    ],
+                  child: SizedBox(
+                    width: tileWidth,
+                    child: _buildTile(styles[i], l10n),
                   ),
                 ),
-                ),
-              ),
-            ),
+            ],
           ),
         );
-      }).toList(),
+      },
+    );
+  }
+
+  Widget _buildTile(RevealStyle style, AppLocalizations l10n) {
+    final selected = style == current;
+    final dimmed = dimUnselected && !selected;
+
+    return GestureDetector(
+      onTap: onChanged == null ? null : () => onChanged!(style),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 180),
+        opacity: dimmed ? 0.35 : 1,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 120),
+          scale: dimUnselected && selected ? 0.94 : 1,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.gold.withValues(alpha: 0.12)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected
+                    ? AppColors.gold.withValues(alpha: 0.6)
+                    : Colors.white12,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  _iconFor(style),
+                  color: selected ? AppColors.gold : Colors.white38,
+                  size: 28,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  style.title(l10n),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: selected ? Colors.white : Colors.white54,
+                  ),
+                ),
+                Text(
+                  style.subtitle(l10n),
+                  style: const TextStyle(fontSize: 11, color: Colors.white30),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

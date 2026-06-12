@@ -8,6 +8,18 @@
   "styleCoinSubtitle": "Heads or tails",
   "styleCardsTitle": "Cards",
   "styleCardsSubtitle": "Texas hold'em starting hand",
+  "styleDiceTitle": "Dice",
+  "styleDiceSubtitle": "Six sides of fate",
+  "diceNaturalTitle": "Natural",
+  "diceCrapsTitle": "Craps",
+  "diceRollDetail": "Rolled {total}",
+  "@diceRollDetail": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "decisionDoSubtitle": "Do it",
   "decisionNotSubtitle": "Skip it",
   "fateHasSpoken": "Fate has spoken",

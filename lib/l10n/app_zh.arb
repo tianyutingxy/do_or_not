@@ -8,6 +8,18 @@
   "styleCoinSubtitle": "正反抛掷",
   "styleCardsTitle": "纸牌",
   "styleCardsSubtitle": "德州起手牌",
+  "styleDiceTitle": "骰子",
+  "styleDiceSubtitle": "六面随机",
+  "diceNaturalTitle": "天牌",
+  "diceCrapsTitle": "投枪",
+  "diceRollDetail": "掷出 {total}",
+  "@diceRollDetail": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "decisionDoSubtitle": "做",
   "decisionNotSubtitle": "不做",
   "fateHasSpoken": "命运给出了",
